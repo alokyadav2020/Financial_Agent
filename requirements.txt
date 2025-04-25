@@ -2,4 +2,9 @@ huggingface-hub
 streamlit
 scrapegraph-py
 pdfkit
+agno
+openai
+duckduckgo-search
+yfinance
+google-search-results
 -e .

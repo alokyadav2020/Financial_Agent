@@ -46,12 +46,13 @@ logout_page = st.Page(logout, title="Log out", icon=":material/logout:")
 
 admin_1 = st.Page(os.path.join("streamlit","executive_summary.py"),title="Executive Summary",icon=":material/security:",default=(role == "Admin"),)
 admin_2 = st.Page(os.path.join("streamlit","Page_3_about_industry.py"), title="Page_3 about industry",icon=":material/person_add:" )
+admin_3 = st.Page(os.path.join("streamlit","market_analysis.py"), title="Market Analysis Report",icon=":material/person_add:" )
 
 
 account_pages = [logout_page]
 
 
-admin_pages = [admin_1, admin_2]
+admin_pages = [admin_1, admin_2,admin_3]
 
 
 
