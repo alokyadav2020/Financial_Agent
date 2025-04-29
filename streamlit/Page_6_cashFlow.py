@@ -129,7 +129,7 @@ def main():
         3. To provide recommendation in 3 to 4 lines.
     <|eot_id|><|start_header_id|>user<|end_header_id|>
 
-    Here is the cash flow data for the years 2023, 2022, and 2021: in {json}
+   
     Use this data and create a professional report.
     Make sure response must be in HTML format.
 
@@ -170,7 +170,7 @@ def main():
                     }
 
                 # Generate report
-                report = generate_report(user_prompt, report_data)
+                report = generate_report(user_prompt + " Here is the cash flow data for the years 2023, 2022, and 2021: in {json}", report_data)
 
                 # Display the report
                 st.subheader("Generated Cash Flow Report")
