@@ -85,8 +85,9 @@ def calculate_key_metrics(data):
 def generate_report(prompt, metrics):
     """Generate financial report using HuggingFace model"""
     client = InferenceClient(
-        st.secrets["hf_model"],
-        token=st.secrets["hf_token"],
+        #  model=st.secrets["hf_model"],
+        provider="hf-inference",
+        api_key=st.secrets["hf_token"],
     )
 
     messages = [
@@ -115,6 +116,7 @@ def generate_report(prompt, metrics):
     }
 
     response = client.chat_completion(
+        model=st.secrets["hf_model"],
         messages=messages,
         response_format=response_format,
         max_tokens=8000,

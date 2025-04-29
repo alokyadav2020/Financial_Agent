@@ -10,8 +10,9 @@ def initialize_clients():
     """Initialize API clients"""
     scrapegraph_client = Client(api_key=st.secrets["scrapegraph_api_key"])
     hf_client = InferenceClient(
-        st.secrets["hf_model"],
-        token=st.secrets["hf_token"],
+        model=st.secrets["hf_model"],
+        provider="hf-inference",
+        api_key=st.secrets["hf_token"],
     )
     return scrapegraph_client, hf_client
 
