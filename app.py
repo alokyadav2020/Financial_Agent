@@ -50,12 +50,15 @@ admin_3 = st.Page(os.path.join("streamlit","market_analysis.py"), title="Market 
 admin_4 = st.Page(os.path.join("streamlit","Page_04_FNL.py"), title="Profit & Loss Analysis",icon=":material/person_add:" )
 admin_5 = st.Page(os.path.join("streamlit","Page_5BalanceSheetAnalysis.py"), title="Balance Sheet Analysis",icon=":material/person_add:" )   
 admin_6 = st.Page(os.path.join("streamlit","Page_6_cashFlow.py"), title="Cash Flow Analysis",icon=":material/person_add:" ) 
+admin_7 = st.Page(os.path.join("streamlit","ValuationAnalyzer.py"), title="Valuation Analyzer",icon=":material/person_add:" )
+admin_8 = st.Page(os.path.join("streamlit","DCFCalculator.py"), title="DCF Calculator",icon=":material/person_add:" )
+admin_9 = st.Page(os.path.join("streamlit","CCACalculator.py"), title="CCA Calculator",icon=":material/person_add:" )
 
 
 account_pages = [logout_page]
 
 
-admin_pages = [admin_1, admin_2,admin_3,admin_4,admin_5,admin_6]
+admin_pages = [admin_1, admin_2,admin_3,admin_4,admin_5,admin_6,admin_7,admin_8,admin_9]
 
 
 
