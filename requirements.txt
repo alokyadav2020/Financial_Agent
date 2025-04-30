@@ -7,4 +7,5 @@ openai
 duckduckgo-search
 yfinance
 google-search-results
+PyPDF2
 -e .
