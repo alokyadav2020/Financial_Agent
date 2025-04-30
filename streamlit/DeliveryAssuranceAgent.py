@@ -129,12 +129,12 @@ def main():
                 })
 
                 # Clear input
-                st.rerun()
+                # st.rerun()
 
         # Clear chat history button
         if st.button("Clear Chat History"):
             st.session_state.chat_history = []
-            st.rerun()
+            # st.rerun()
 
     # Download chat history
     if st.session_state.chat_history:
