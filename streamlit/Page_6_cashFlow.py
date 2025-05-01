@@ -118,22 +118,90 @@ def main():
 
     # Default prompt template
     default_prompt = """
-    <|begin_of_text|><|start_header_id|>system<|end_header_id|>
-    Generate a detailed financial report in HTML format.         
-    You are financial expert and having great experience in Cash Flow Statement report generation
-    You will be get data of three consecutive years and you have to develop reports for each year.
-    Heading should be in h3 tag only, Ex. <h3 style='color: #555; font-family: Arial, sans-serif;'>Cash Flow Statement Report</h3>        
-    You have three tasks:
-        1. TO display all data Operating Cash Flow (OCF), Free Cash Flow (FCF), Cash Flow Coverage Ratio year wise in One table.
-        2. To write conclusion in 3 to 4 lines.
-        3. To provide recommendation in 3 to 4 lines.
-    <|eot_id|><|start_header_id|>user<|end_header_id|>
+    <h3 style='color: #555; font-family: Arial, sans-serif;'>Cash Flow Statement Analysis Report</h3>
 
-   
-    Use this data and create a professional report.
-    Make sure response must be in HTML format.
+<p style='font-family: Arial, sans-serif;'>This report provides an analysis of cash flow metrics for three consecutive years.  We will examine Operating Cash Flow (OCF), Free Cash Flow (FCF), and the Cash Flow Coverage Ratio to assess the company's ability to generate cash, fund its operations, and service its debt.  All values are in millions of USD.</p>
 
-    <|eot_id|><|start_header_id|>assistant<|end_header_id|>
+<table style='width: 100%; border-collapse: collapse; font-family: Arial, sans-serif;'>
+  <thead style='background-color: #f2f2f2;'>
+    <tr>
+      <th style='padding: 8px; border: 1px solid #ddd;'>Metric</th>
+      <th style='padding: 8px; border: 1px solid #ddd;'>Year 1</th>
+      <th style='padding: 8px; border: 1px solid #ddd;'>Year 2</th>
+      <th style='padding: 8px; border: 1px solid #ddd;'>Year 3</th>
+      <th style='padding: 8px; border: 1px solid #ddd;'>Calculation</th>
+      <th style='padding: 8px; border: 1px solid #ddd;'>Interpretation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Revenue</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>100</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>120</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>130</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Given</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Increasing revenue indicates potential for stronger cash flow generation.</td>
+    </tr>
+    <tr>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Operating Cash Flow (OCF)</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>20</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>25</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>30</td>
+       <td style='padding: 8px; border: 1px solid #ddd;'>Given</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>OCF shows the cash generated from core business operations. Upward trend is positive.</td>
+    </tr>
+    <tr>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Capital Expenditures (CAPEX)</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>10</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>12</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>15</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Given</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>CAPEX represents investments in fixed assets. Increasing CAPEX may indicate growth.</td>
+    </tr>
+    <tr>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Free Cash Flow (FCF)</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>10</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>13</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>15</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>OCF - CAPEX</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>FCF is the cash available to the company after covering operating expenses and capital expenditures.  Positive and increasing FCF is highly desirable.</td>
+    </tr>
+     <tr>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Interest Expense</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>5</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>6</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>7</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Given</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Interest expense is the cost of borrowing.</td>
+    </tr>
+    <tr>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Cash Flow Coverage Ratio</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>4x</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>4.17x</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>4.29x</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>OCF / Interest Expense</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>This ratio measures the company's ability to pay its interest obligations. A higher ratio indicates stronger solvency.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 style='color: #555; font-family: Arial, sans-serif;'>Conclusion</h3>
+<p style='font-family: Arial, sans-serif;'>
+  The company demonstrates a positive trend in cash flow generation, with both OCF and FCF increasing over the three years. The Cash Flow Coverage Ratio is also healthy, indicating a strong ability to service debt. The consistent increase in revenue is a positive indicator for future cash flow.
+  <br>
+  <b style='color:red'>However, the analysis does not delve into the reasons behind the increase in OCF.  A deeper dive into the components of OCF (e.g., changes in working capital) would provide more insight. Additionally, while the Cash Flow Coverage Ratio is increasing, it's important to compare it against industry benchmarks to assess its true strength.</b>
+</p>
+
+<h3 style='color: #555; font-family: Arial, sans-serif;'>Recommendations</h3>
+<p style='font-family: Arial, sans-serif;'>
+  The company should continue to focus on maintaining and improving its operating efficiency to further enhance OCF.  Monitoring CAPEX is crucial to balance growth investments with free cash flow generation.  Maintaining a strong Cash Flow Coverage Ratio is essential for investor confidence and access to capital.
+  <br>
+  <b style='color:red'>It is recommended to analyze working capital management trends to understand how changes in accounts receivable, inventory, and accounts payable are affecting OCF.  Furthermore, a comparison of the company's CAPEX to industry averages would help determine if the investment levels are appropriate for its growth stage.</b>
+<
+
+
+
+
     """
 
     # Allow user to customize prompt

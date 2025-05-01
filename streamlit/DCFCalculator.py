@@ -80,15 +80,80 @@ def main():
     # Default prompt template
     default_prompt = """
     <|begin_of_text|><|start_header_id|>system<|end_header_id|>
-    Generate a detailed financial report in HTML format.         
-    You are financial expert and having great experience in report generation
-    You will be get data in json. Read data carefully and create a professional report.
-    Heading should be in h3 tag only, Ex. <h3 style='color: #555; font-family: Arial, sans-serif;'>Discounted Cash Flow (DCF) Report</h3> 
     
-    You have three tasks:
-        1. TO display all data Projected Cash Flows, Discount Rate, Present Values, Total DCF.
-        2. To write conclusion in 3 to 4 lines only.
-        3. Do not provide any recommendation.
+<h3 style='color: #555; font-family: Arial, sans-serif;'>Discounted Cash Flow (DCF) Report</h3>
+
+<p style='font-family: Arial, sans-serif;'>This report presents a valuation analysis using the Discounted Cash Flow (DCF) method. The DCF method estimates the intrinsic value of an investment based on its projected future cash flows, discounted to their present value.  All values are in millions of USD.</p>
+
+<table style='width: 100%; border-collapse: collapse; font-family: Arial, sans-serif;'>
+  <thead style='background-color: #f2f2f2;'>
+    <tr>
+      <th style='padding: 8px; border: 1px solid #ddd;'>Year</th>
+      <th style='padding: 8px; border: 1px solid #ddd;'>Projected Cash Flows</th>
+      <th style='padding: 8px; border: 1px solid #ddd;'>Discount Rate</th>
+      <th style='padding: 8px; border: 1px solid #ddd;'>Present Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style='padding: 8px; border: 1px solid #ddd;'>1</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>25</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>10%</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>22.73</td>
+    </tr>
+    <tr>
+      <td style='padding: 8px; border: 1px solid #ddd;'>2</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>30</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>10%</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>24.79</td>
+    </tr>
+    <tr>
+      <td style='padding: 8px; border: 1px solid #ddd;'>3</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>35</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>10%</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>26.31</td>
+    </tr>
+    <tr>
+      <td style='padding: 8px; border: 1px solid #ddd;'>4</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>40</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>10%</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>27.32</td>
+    </tr>
+     <tr>
+      <td style='padding: 8px; border: 1px solid #ddd;'>5</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>45</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>10%</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>27.84</td>
+    </tr>
+    <tr>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Total DCF Value</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>129.0</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'></td>
+      <td style='padding: 8px; border: 1px solid #ddd;'></td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 style='color: #555; font-family: Arial, sans-serif;'>Calculations</h3>
+<p style='font-family: Arial, sans-serif;'>
+    The present value (PV) of each year's projected cash flow is calculated using the following formula:
+    <br>
+    PV = Cash Flow / (1 + Discount Rate)^Year
+    <br>
+    For example, the present value for Year 1 is calculated as: 25 / (1 + 0.10)^1 = 22.73.  The Total DCF Value is the sum of the present values of all projected cash flows over the forecast period.
+</p>
+
+<h3 style='color: #555; font-family: Arial, sans-serif;'>What this means to your Business</h3>
+<p style='font-family: Arial, sans-serif;'>
+    A DCF valuation of $129.0 million suggests the intrinsic value of the business, based on its projected cash-generating ability, is  $129.0 million. This indicates the business is expected to generate significant cash flow in the future.  However, this valuation is highly sensitive to the projected cash flows and the discount rate, both of which involve assumptions about future performance and market conditions.  A higher discount rate would result in a lower valuation, and vice-versa.  It's crucial to regularly review and update the assumptions to ensure the valuation remains relevant.
+</p>
+
+<h3 style='color: #555; font-family: Arial, sans-serif;'>Conclusion</h3>
+<p style='font-family: Arial, sans-serif;'>
+  The Discounted Cash Flow analysis indicates a total value of $129.0 million. This valuation is derived from the present value of projected future cash flows, discounted at a rate of 10%. The DCF method is sensitive to both the projected cash flows and the discount rate, and these should be carefully considered.
+</p>
+
+
     <|eot_id|><|start_header_id|>user<|end_header_id|>
 
    

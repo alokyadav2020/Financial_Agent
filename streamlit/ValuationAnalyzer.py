@@ -91,38 +91,54 @@ def main():
     # Prompt Templates
     prompt_templates = """"
        <|begin_of_text|><|start_header_id|>system<|end_header_id|>
-        You are a valuation expert tasked with creating a comprehensive valuation report. Using the provided data, generate an HTML report that includes the following valuation methods with their calculations and brief interpretations:
-        
-        Heading should be in h3 tag only, Ex. <h3 style='color: #555; font-family: Arial, sans-serif;'>Valuation Report</h3>
-                                          
-        1. Asset-Based Valuation:
-        - Calculate and show the range based on total assets and liabilities
-        - Provide one short line interpretation
+       <h3 style='color: #555; font-family: Arial, sans-serif;'>Valuation Report</h3>
 
-        2. DCF Valuation:
-        - Show the projected cash flows and discount rate
-        - Display the calculated value of $7.38M
-        - Add one line about strong future cash flows
+<p style='font-family: Arial, sans-serif;'>This report presents a valuation analysis using several methodologies to estimate the fair market value. The results of each method are summarized below.</p>
 
-        3. Comparable Company Analysis (CCA):
-        - Display the EBITDA and industry multiple
-        - Show the calculated value of $12M
-        - Add one line about industry benchmark alignment
+<table style='width: 100%; border-collapse: collapse; font-family: Arial, sans-serif;'>
+  <thead style='background-color: #f2f2f2;'>
+    <tr>
+      <th style='padding: 8px; border: 1px solid #ddd;'>Valuation Method</th>
+      <th style='padding: 8px; border: 1px solid #ddd;'>Value / Range (in millions of USD)</th>
+      <th style='padding: 8px; border: 1px solid #ddd;'>Interpretation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Asset-Based Valuation</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Range: $40 - $60</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Reflects the net value of the company's assets, providing a floor value.</td>
+    </tr>
+    <tr>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Discounted Cash Flow (DCF) Valuation</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>$7.38</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Indicates value based on the present value of projected strong future cash flows.</td>
+    </tr>
+    <tr>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Comparable Company Analysis (CCA)</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>$12</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Value is in alignment with industry benchmarks.</td>
+    </tr>
+    <tr>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Rule of Thumb Methods</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Range: $11.5 - $13.5</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Provides a quick estimate, useful for initial assessment.</td>
+    </tr>
+    <tr>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Earnings Multiplier</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Range: $9.6 - $14.4</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Valuation based on a multiple of earnings.</td>
+    </tr>
+    <tr>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Monte Carlo Simulation</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Range: $8 - $13</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Provides a valuation range with statistical confidence.</td>
+    </tr>
+  </tbody>
+</table>
 
-        4. Rule of Thumb Methods:
-        - Show the revenue and industry multiplier
-        - Calculate and display the range
-        - Add one short interpretation
 
-        5. Earnings Multiplier:
-        - Show the earnings and PE ratio
-        - Calculate and display the range
-        - Add one brief comment
 
-        6. Monte Carlo Simulation:
-        - Display the simulation parameters
-        - Show the value range
-        - Add one line about statistical confidence
                                            <|eot_id|><|start_header_id|>user<|end_header_id|>
 
         

@@ -97,14 +97,93 @@ def main():
     # Default prompt template
     default_prompt = """
     <|begin_of_text|><|start_header_id|>system<|end_header_id|>
-    Generate a detailed financial report in HTML format.
-    You are financial expert and having great experience in Balance Sheet report generation
-    Heading should be in h3 tag only, Ex. <h3 style='color: #555; font-family: Arial, sans-serif;'>Balance Sheet Report</h3>
-    You will be given data of three consecutive years and you have to develop reports for each year.
-    You have three tasks:
-        1. TO display all data Total Assets, Total Liabilities, Shareholder's Equity, Current Ratio, Debt-to-Equity Ratio year wise in One table.
-        2. To write conclusion in 3 to 4 lines.
-        3. To provide recommendation in 3 to 4 lines.
+    <h3 style='color: #555; font-family: Arial, sans-serif;'>Balance Sheet Report</h3>
+
+<p style='font-family: Arial, sans-serif;'>This report provides an analysis of key balance sheet metrics for three consecutive years.  We will examine Total Assets, Total Liabilities, Shareholder's Equity, the Current Ratio, and the Debt-to-Equity Ratio to assess the company's financial position, liquidity, and leverage. All values are in millions of USD.</p>
+
+<table style='width: 100%; border-collapse: collapse; font-family: Arial, sans-serif;'>
+  <thead style='background-color: #f2f2f2;'>
+    <tr>
+      <th style='padding: 8px; border: 1px solid #ddd;'>Metric</th>
+      <th style='padding: 8px; border: 1px solid #ddd;'>Year 1</th>
+      <th style='padding: 8px; border: 1px solid #ddd;'>Year 2</th>
+      <th style='padding: 8px; border: 1px solid #ddd;'>Year 3</th>
+      <th style='padding: 8px; border: 1px solid #ddd;'>Calculation</th>
+      <th style='padding: 8px; border: 1px solid #ddd;'>Interpretation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Total Assets</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>100</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>110</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>120</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Given</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Represents the company's total resources. Increasing assets can indicate growth.</td>
+    </tr>
+    <tr>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Total Liabilities</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>40</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>45</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>50</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Given</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Represents the company's total obligations to creditors.</td>
+    </tr>
+    <tr>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Shareholder's Equity</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>60</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>65</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>70</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Total Assets - Total Liabilities</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Represents the owners' stake in the company.</td>
+    </tr>
+    <tr>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Current Assets</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>50</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>55</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>60</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Given</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Assets that can be converted to cash within one year.</td>
+    </tr>
+    <tr>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Current Liabilities</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>25</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>27</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>28</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Given</td>
+       <td style='padding: 8px; border: 1px solid #ddd;'>Obligations due within one year.</td>
+    </tr>
+    <tr>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Current Ratio</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>2x</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>2.04x</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>2.14x</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Current Assets / Current Liabilities</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Measures short-term liquidity; ability to pay short-term obligations. A higher ratio is generally better.</td>
+    </tr>
+    <tr>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Debt-to-Equity Ratio</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>0.67x</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>0.69x</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>0.71x</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Total Liabilities / Shareholder's Equity</td>
+      <td style='padding: 8px; border: 1px solid #ddd;'>Measures financial leverage; proportion of financing from debt vs. equity. A lower ratio is generally better.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 style='color: #555; font-family: Arial, sans-serif;'>Conclusion</h3>
+<p style='font-family: Arial, sans-serif;'>
+  The company's total assets, liabilities, and shareholder's equity are all showing a steady increase over the three years, indicating growth.  The Current Ratio is consistently above 2, demonstrating strong short-term liquidity.  The Debt-to-Equity Ratio is also relatively stable, suggesting a balanced capital structure.
+</p>
+
+<h3 style='color: #555; font-family: Arial, sans-serif;'>Recommendations</h3>
+<p style='font-family: Arial, sans-serif;'>
+  The company should maintain its strong liquidity position as indicated by the Current Ratio. While the Debt-to-Equity Ratio is reasonable, it should be monitored to ensure it doesn't increase significantly, which could increase financial risk.  Continued asset growth should be supported by profitable operations.
+</p>
+
+
+
     <|eot_id|><|start_header_id|>user<|end_header_id|>
 
     

@@ -65,11 +65,14 @@ def main():
 
     # Default scraping prompt
     default_scraping_prompt = """
+   
     **Business Description:** Detailed overview of the company's history, mission, and vision.
     **People:** hierarchical structure with departments for Operations, Sales & Marketing, Finance, and R&D, reporting to a CEO.
     **Product/Service Offerings:** Comprehensive list and description of products or services.
     **Technology Stack:** Overview of the technology and tools used in operations.
     **Market Position:** Analysis of the company's position in the market, including competitors and market share.
+
+
     """
 
     # Scraping prompt input
@@ -78,28 +81,28 @@ def main():
 
     # Default report generation prompt
     default_report_prompt = """
-    
-    **Topics**
-    Company Overview: create a report on company overview with using given data.
+  **Topics**
+    Company Overview: create a report on company overview using given data.
 
     Example:
-    <p>Acme Manufacturing, founded in 1995, is a manufacturer of industrial components for the automotive and aerospace industries. The company's mission is to provide high-quality, reliable components while adhering to sustainable manufacturing principles.</p>
+    <p>company, founded in 1995, is a manufacturer of industrial components for the automotive and aerospace industries. The company's mission is to provide high-quality, reliable components while adhering to sustainable  principles.</p>
     <h4 class="details-heading">People:</h4>
-    <p>Acme Manufacturing has a hierarchical structure with departments for Operations, Sales & Marketing, Finance, and R&D, reporting to a CEO.</p>
+    <p>company has a hierarchical structure with departments for Operations, Sales & Marketing, Finance, and R&D, reporting to a CEO.</p>
     <h4 class="details-heading">Products / Services offerings:</h4>
-    <p>Acme Manufacturing offers a range of precision-engineered components, including:</p>
+    <p>company offers a range of precision-engineered components, including:</p>
     <ul class="details-list">
         <li>High-strength fasteners</li>
         <li>Precision gears</li>
         <li>Custom-machined parts.</li>
     </ul>
     <h4 class="details-heading">Technology:</h4>
-    <p>Acme Manufacturing, founded in 1995, is a manufacturer of industrial components for the automotive and aerospace industries. The company's mission is to provide high-quality, reliable components while adhering to sustainable manufacturing principles.</p>
+    <p>company, founded in 1995, is a manufacturer of industrial components for the automotive and aerospace industries. The company's mission is to provide high-quality, reliable components while adhering to sustainable  principles.</p>
 
     Market Position: create a report on market position with using given data.
     Example:
-    <p>Acme Manufacturing establishes a strong revenue growth trajectory & holds a favorable market position.</p>
-    <p>By addressing the identified challenges related to profitability and leverage, & by capitalizing on growth opportunities, Acme Manufacturing can enhance its financial performance, reduce risk exposure, and maximize shareholder values.</p>
+    <p>company establishes a strong revenue growth trajectory & holds a favorable market position.</p>
+    <p>By addressing the identified challenges related to profitability and leverage, & by capitalizing on growth opportunities, company can enhance its financial performance, reduce risk exposure, and maximize shareholder values.</p>
+
     """
 
     # Report generation prompt input
