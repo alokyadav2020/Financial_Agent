@@ -54,12 +54,16 @@ admin_7 = st.Page(os.path.join("streamlit","ValuationAnalyzer.py"), title="Valua
 admin_8 = st.Page(os.path.join("streamlit","DCFCalculator.py"), title="DCF Calculator",icon=":material/person_add:" )
 admin_9 = st.Page(os.path.join("streamlit","CCACalculator.py"), title="CCA Calculator",icon=":material/person_add:" )
 admin_10 = st.Page(os.path.join("streamlit","DeliveryAssuranceAgent.py"), title="Delivery Assurance Agent",icon=":material/person_add:" )
+admin_11 = st.Page(os.path.join("streamlit","hc_assessment_app.py"), title="Human Capital Assessment",icon=":material/person_add:" )
+admin_12 = st.Page(os.path.join("streamlit","OperationalAssessment.py"), title="Operational Assessment",icon=":material/person_add:" )
+admin_13 = st.Page(os.path.join("streamlit","legal_comlince.py"), title="Legal Compliance Assessment",icon=":material/person_add:" )
+admin_14 = st.Page(os.path.join("streamlit","RiskAssessment.py"), title="Risk Assessment",icon=":material/person_add:" )
 
 
 account_pages = [logout_page]
 
 
-admin_pages = [admin_1, admin_2,admin_3,admin_4,admin_5,admin_6,admin_7,admin_8,admin_9,admin_10]
+admin_pages = [admin_1, admin_2,admin_3,admin_4,admin_5,admin_6,admin_7,admin_8,admin_9,admin_11,admin_12,admin_13,admin_14,admin_10]
 
 
 
