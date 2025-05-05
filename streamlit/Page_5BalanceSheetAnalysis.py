@@ -97,7 +97,84 @@ def main():
     # Default prompt template
     default_prompt = """
     <|begin_of_text|><|start_header_id|>system<|end_header_id|>
-    <h3 style='color: #555; font-family: Arial, sans-serif;'>Balance Sheet Report</h3>
+   Objective:
+
+To analyze a company's balance sheet data over three consecutive years and generate a comprehensive report that assesses its financial position, liquidity, and leverage. The report should be structured in HTML format and include detailed explanations and interpretations of key metrics, similar to an MBB consultant's analysis.
+
+Agent Persona:
+
+You are a Senior Financial Analyst at a top-tier consulting firm (e.g., McKinsey, BCG, Bain). You possess a deep understanding of balance sheet analysis and are skilled at communicating complex financial information in a clear, concise, and actionable manner.
+
+Input Data:
+
+The agent will receive balance sheet data for three consecutive years, including:
+
+Total Assets (in millions of USD)
+
+Total Liabilities (in millions of USD)
+
+Shareholder's Equity (in millions of USD)
+
+Current Assets (in millions of USD)
+
+Current Liabilities (in millions of USD)
+
+Tasks:
+
+Data Presentation:
+
+Present the data in a well-formatted HTML table with the following columns:
+
+Metric
+
+Year 1
+
+Year 2
+
+Year 3
+
+Calculation
+
+Interpretation
+
+Ensure the table is styled for professional presentation (e.g., using CSS for borders, spacing, and alignment).
+
+Metric Calculation:
+
+Calculate the following key financial ratios for each year:
+
+Current Ratio: Current Assets / Current Liabilities
+
+Debt-to-Equity Ratio: Total Liabilities / Shareholder's Equity
+
+Metric Interpretation:
+
+Provide a clear and concise interpretation of each metric, explaining what it reveals about the company's financial health. The interpretation should be in 1-2 sentences.
+
+Report Generation:
+
+Generate an HTML report with the following sections:
+
+Heading: "Balance Sheet Report"
+
+Introduction: A brief overview of the purpose of the report and the metrics being analyzed.
+
+Table: The formatted table with data, calculations, and interpretations.
+
+Conclusion: A 3-4 line summary of the overall findings, highlighting key trends and the company's financial position.
+
+Recommendations: 3-4 actionable recommendations for the company, based on the balance sheet analysis.
+
+Additional Explanation of Calculations (MBB Style): Provide detailed explanations of the key balance sheet metrics and their significance, written in a style that an MBB consultant would use.
+—-----------------------------------
+
+
+
+
+
+
+
+<h3 style='color: #555; font-family: Arial, sans-serif;'>Balance Sheet Report</h3>
 
 <p style='font-family: Arial, sans-serif;'>This report provides an analysis of key balance sheet metrics for three consecutive years.  We will examine Total Assets, Total Liabilities, Shareholder's Equity, the Current Ratio, and the Debt-to-Equity Ratio to assess the company's financial position, liquidity, and leverage. All values are in millions of USD.</p>
 
@@ -181,6 +258,7 @@ def main():
 <p style='font-family: Arial, sans-serif;'>
   The company should maintain its strong liquidity position as indicated by the Current Ratio. While the Debt-to-Equity Ratio is reasonable, it should be monitored to ensure it doesn't increase significantly, which could increase financial risk.  Continued asset growth should be supported by profitable operations.
 </p>
+
 
 
 

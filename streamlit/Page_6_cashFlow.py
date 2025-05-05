@@ -118,7 +118,7 @@ def main():
 
     # Default prompt template
     default_prompt = """
-    <h3 style='color: #555; font-family: Arial, sans-serif;'>Cash Flow Statement Analysis Report</h3>
+   <h3 style='color: #555; font-family: Arial, sans-serif;'>Cash Flow Statement Analysis Report</h3>
 
 <p style='font-family: Arial, sans-serif;'>This report provides an analysis of cash flow metrics for three consecutive years.  We will examine Operating Cash Flow (OCF), Free Cash Flow (FCF), and the Cash Flow Coverage Ratio to assess the company's ability to generate cash, fund its operations, and service its debt.  All values are in millions of USD.</p>
 
@@ -198,6 +198,7 @@ def main():
   <br>
   <b style='color:red'>It is recommended to analyze working capital management trends to understand how changes in accounts receivable, inventory, and accounts payable are affecting OCF.  Furthermore, a comparison of the company's CAPEX to industry averages would help determine if the investment levels are appropriate for its growth stage.</b>
 <
+
 
 
 
