@@ -8,4 +8,9 @@ duckduckgo-search
 yfinance
 google-search-results
 PyPDF2
+python-docx
+openpyxl
+pandas
+Pillow
+mcp
 -e .

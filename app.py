@@ -58,12 +58,13 @@ admin_11 = st.Page(os.path.join("streamlit","hc_assessment_app.py"), title="Huma
 admin_12 = st.Page(os.path.join("streamlit","OperationalAssessment.py"), title="Operational Assessment",icon=":material/person_add:" )
 admin_13 = st.Page(os.path.join("streamlit","legal_comlince.py"), title="Legal Compliance Assessment",icon=":material/person_add:" )
 admin_14 = st.Page(os.path.join("streamlit","RiskAssessment.py"), title="Risk Assessment",icon=":material/person_add:" )
+admin_15 = st.Page(os.path.join("streamlit","VirtualDataRoomAgent.py"), title="Virtual Data Room Agent",icon=":material/person_add:" )
 
 
 account_pages = [logout_page]
 
 
-admin_pages = [admin_1, admin_2,admin_3,admin_4,admin_5,admin_6,admin_7,admin_8,admin_9,admin_11,admin_12,admin_13,admin_14,admin_10]
+admin_pages = [admin_1, admin_2,admin_3,admin_4,admin_5,admin_6,admin_7,admin_8,admin_9,admin_11,admin_12,admin_13,admin_14,admin_10,admin_15]
 
 
 
