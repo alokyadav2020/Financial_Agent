@@ -28,7 +28,7 @@ def generate_report(client, data_company, report_prompt):
     """Generate report using HuggingFace model"""
     messages = [
         {"role": "system", "content": "You are financial report expert."},
-        {"role": "user", "content": report_prompt.format(data_company=data_company)},
+        {"role": "user", "content": report_prompt},
     ]
 
     response_format = {
@@ -47,7 +47,7 @@ def generate_report(client, data_company, report_prompt):
 
     response = client.chat_completion(
         messages=messages,
-        response_format=response_format,
+        # response_format=response_format,
         max_tokens=8000,
         temperature=0.1,
     )

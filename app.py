@@ -45,7 +45,7 @@ logout_page = st.Page(logout, title="Log out", icon=":material/logout:")
 
 
 admin_1 = st.Page(os.path.join("streamlit","executive_summary.py"),title="Executive Summary",icon=":material/security:",default=(role == "Admin"),)
-admin_2 = st.Page(os.path.join("streamlit","Page_3_about_industry.py"), title="Page_3 about industry",icon=":material/person_add:" )
+admin_2 = st.Page(os.path.join("streamlit","Page_3_about_industry.py"), title="About Company",icon=":material/person_add:" )
 admin_3 = st.Page(os.path.join("streamlit","market_analysis.py"), title="Market Analysis Report",icon=":material/person_add:" )
 admin_4 = st.Page(os.path.join("streamlit","Page_04_FNL.py"), title="Profit & Loss Analysis",icon=":material/person_add:" )
 admin_5 = st.Page(os.path.join("streamlit","Page_5BalanceSheetAnalysis.py"), title="Balance Sheet Analysis",icon=":material/person_add:" )   
