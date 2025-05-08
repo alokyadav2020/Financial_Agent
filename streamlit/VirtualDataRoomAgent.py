@@ -677,8 +677,9 @@ def initialize_llm_client(api_token_value):
         try:
             # Use the specified InferenceClient instantiation
             client = InferenceClient(
+                
                 model=st.secrets["hf_model"], # Ensure HF_MODEL is defined
-                # provider="hf-inference", # This might be for specific HF libraries, usually token is enough
+                provider="hf-inference", # This might be for specific HF libraries, usually token is enough
                 token=api_token_value # Renamed from api_key for clarity with InferenceClient param
             )
             # Test client (optional, can remove if it causes issues or delays)

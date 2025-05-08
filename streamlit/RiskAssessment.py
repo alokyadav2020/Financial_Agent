@@ -13,6 +13,7 @@ class OperationalAssessment:
         # Ensure you have hf_token and hf_model defined in your Streamlit secrets
         try:
             self.client = InferenceClient(
+                provider="hf-inference",
                 model=st.secrets["hf_model"], # Added model here for clarity, though chat_completion needs it too
                 token=st.secrets["hf_token"] # Use token argument
             )
