@@ -13,4 +13,6 @@ openpyxl
 pandas
 Pillow
 mcp
+python-dotenv
+openai
 -e .

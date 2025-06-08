@@ -7,7 +7,7 @@ import streamlit as st
 
 def initialize_clients():
     """Initialize API clients"""
-    scrapegraph_client = Client(api_key=st.secrets["scrapegraph_api_key"])
+    scrapegraph_client = Client(api_key =st.secrets["scrapegraph_api_key"])
     hf_client = InferenceClient(
         provider="hf-inference",
         model=st.secrets["hf_model"],
@@ -38,41 +38,120 @@ def scrape_website_data(client,website_url: str, user_prompt: str) -> Dict[str, 
 def generate_report(hf_client, data_company: Dict[str, Any], report_prompt_template: str) -> Dict[str, Any]:
     """Generate report using HuggingFace model"""
     try:
-        data_company_json_str = json.dumps(data_company, indent=2)
+        # Format data company as clean JSON string
+        data_company_json_str = json.dumps(data_company, indent=2, ensure_ascii=False)
+        
         messages = [
-            {"role": "system", "content": "You are a financial report expert. Your task is to generate a comprehensive due diligence report. The report should be structured as a single JSON object with sections for company overview, people, SWOT analysis, etc."},
-            {"role": "user", "content": report_prompt_template.format(data_company=data_company_json_str)},
+            {
+                "role": "system", 
+                "content": """You are a financial report expert. Generate a concise JSON report with this exact structure:
+                {
+                    "companyOverview": "brief company overview (max 100 words)",
+                    "people": "key personnel and structure (max 100 words)",
+                    "productServiceOfferings": "main products/services (max 150 words)",
+                    "technologyStack": "key technologies (max 100 words)",
+                    "marketPosition": "market position summary (max 100 words)",
+                    "productPricingPosition": "pricing overview (max 100 words)",
+                    "swotAnalysis": {
+                        "strengths": "key strengths (max 50 words)",
+                        "weaknesses": "key weaknesses (max 50 words)",
+                        "opportunities": "key opportunities (max 50 words)",
+                        "threats": "key threats (max 50 words)"
+                    }
+                }
+                Keep all responses brief and ensure valid JSON format."""
+            },
+            {
+                "role": "user", 
+                "content": f"Analyze this data and return a JSON report: {data_company_json_str}"
+            }
         ]
 
+        # Generate response with increased max_tokens
         response = hf_client.chat_completion(
             messages=messages,
-            max_tokens=8192,
+            max_tokens=12000,  # Increased from 8192
             temperature=0.1,
         )
         
-        raw_content = response.choices[0].message.content
-        cleaned_content = raw_content.strip()
+        # Clean the response content
+        raw_content = response.choices[0].message.content.strip()
         
-        # Clean JSON content if wrapped in code blocks
-        if cleaned_content.startswith("```json"):
-            cleaned_content = cleaned_content[7:]
-        elif cleaned_content.startswith("```"):
-            cleaned_content = cleaned_content[3:]
-        if cleaned_content.endswith("```"):
-            cleaned_content = cleaned_content[:-3]
+        # Extract JSON from the response
+        json_start = raw_content.find('{')
+        json_end = raw_content.rfind('}') + 1
+        if json_start >= 0 and json_end > json_start:
+            cleaned_content = raw_content[json_start:json_end]
+        else:
+            raise ValueError("No valid JSON found in response")
 
-        if not cleaned_content.strip():
-            return {"error": "LLM returned empty content"}
+        # Parse and validate JSON
+        try:
+            report_json = json.loads(cleaned_content)
+            required_keys = ["companyOverview", "people", "productServiceOfferings", 
+                           "technologyStack", "marketPosition", "productPricingPosition", 
+                           "swotAnalysis"]
+            
+            missing_keys = [key for key in required_keys if key not in report_json]
+            if missing_keys:
+                raise ValueError(f"Missing required keys in response: {missing_keys}")
+                
+            return report_json
+            
+        except json.JSONDecodeError as je:
+            print(f"Invalid JSON response: {cleaned_content}")
+            raise ValueError(f"Failed to parse response as JSON: {str(je)}")
 
-        return json.loads(cleaned_content.strip())
-
-    except json.JSONDecodeError as e:
-        print(f"JSON decode error: {str(e)}")
-        return {"error": "JSONDecodeError", "details": str(e)}
     except Exception as e:
         print(f"Error during report generation: {str(e)}")
-        return {"error": "Report generation failed", "details": str(e)}
+        return {
+            "error": "Report generation failed",
+            "details": str(e),
+            "raw_response": raw_content if 'raw_content' in locals() else None
+        }
 
+
+def format_industry_analysis(report_json):
+    """Format the industry analysis report in a clean, structured way"""
+    # Get SWOT analysis with fallbacks
+    swot = report_json.get('swotAnalysis', {})
+    
+    formatted_report = f"""
+## Industry Analysis Report
+
+### Company Overview
+{report_json.get('companyOverview', 'No company overview available')}
+
+### Organization & People
+{report_json.get('people', 'No personnel information available')}
+
+### Products & Services
+{report_json.get('productServiceOfferings', 'No product/service information available')}
+
+### Technology Infrastructure
+{report_json.get('technologyStack', 'No technology information available')}
+
+### Market Position & Competition
+{report_json.get('marketPosition', 'No market position information available')}
+
+### Pricing Strategy
+{report_json.get('productPricingPosition', 'No pricing information available')}
+
+### SWOT Analysis
+
+#### Strengths
+{swot.get('strengths', 'No strengths identified')}
+
+#### Weaknesses
+{swot.get('weaknesses', 'No weaknesses identified')}
+
+#### Opportunities
+{swot.get('opportunities', 'No opportunities identified')}
+
+#### Threats
+{swot.get('threats', 'No threats identified')}
+"""
+    return formatted_report
 def analyze_website(website_url: str) -> Dict[str, Any]:
     """Main function to analyze a website and generate a report"""
   
@@ -125,7 +204,10 @@ def analyze_website(website_url: str) -> Dict[str, Any]:
         return report_data
 
     print("Analysis completed successfully!")
-    return report_data
+
+    # Format the report for better readability
+    formatted_report = format_industry_analysis(report_data)
+    return formatted_report
 
 if __name__ == "__main__":
     # Example usage
@@ -133,6 +215,7 @@ if __name__ == "__main__":
    
     
     result = analyze_website(website_url)
+    print(result)
     
     # Save the result to a JSON file
     # output_file = "industry_analysis_report.json"

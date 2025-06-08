@@ -72,26 +72,9 @@ class OperationalAssessment:
             return f"Error generating analysis: {str(e)}"
 
 def operationassessment(selected_phase,selected_task,industry_context):
-    st.title("MBB Operational Assessment Tool")
-
-    # Fixed timestamp and username as per requirement
-   
-    # Initialize assessment object
-    if 'assessment' not in st.session_state:
-        st.session_state.assessment = OperationalAssessment()
-    if 'analysis_history' not in st.session_state:
-        st.session_state.analysis_history = []
-
-    # Phase and Task Selection
-    st.subheader("Assessment Configuration")
- 
-
     
+    assessment = OperationalAssessment()
 
-    # Industry Context
-    
-
-    # Default prompt template based on selected phase and task
     default_prompt = f"""
     Conduct a thorough analysis for {selected_phase} - {selected_task}.
     
@@ -106,7 +89,7 @@ def operationassessment(selected_phase,selected_task,industry_context):
     focusing on operational excellence and efficiency improvements.
     """
 
-    analysis = st.session_state.assessment.generate_analysis(
+    analysis =assessment.generate_analysis(
                     default_prompt,
                     selected_phase,
                     selected_task,

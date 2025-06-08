@@ -6,6 +6,19 @@ from agno.tools.yfinance import YFinanceTools
 from agno.team import Team
 from agno.tools.serpapi import SerpApiTools
 from agno.tools.reasoning import ReasoningTools
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Access the API key
+openai_api_key = os.getenv(st.secrets["open_api_key"])
+
+# Use it in your OpenAI client
+import openai
+openai.api_key = openai_api_key
+
 
 class MarketAnalyzer:
     def __init__(self):
@@ -14,7 +27,10 @@ class MarketAnalyzer:
             self.model_config = OpenAIChat(
                 id=st.secrets["openai_model"],
                 api_key=st.secrets["open_api_key"],
+                
             )
+
+           
         except KeyError as e:
             raise Exception(f"Missing required API key in secrets: {e}")
 
@@ -22,27 +38,27 @@ class MarketAnalyzer:
         return """
         Generate a comprehensive market research report including:
         
-        **Industry Overview:** 
+        Industry Overview:
         - Current state and future outlook of the industry
         - Market size and growth projections
         - Key industry trends and drivers
         
-        **Market Share Analysis:** 
+        Market Share Analysis: 
         - Detailed breakdown of market share by company
         - Key players and their positioning
         - Competitive landscape analysis
         
-        **SWOT Analysis:**
+        SWOT Analysis:
         - In-depth analysis of Strengths, Weaknesses, Opportunities, and Threats
         - Market-specific factors affecting each SWOT element
         - Strategic implications for industry players
         
-        **Customer Analysis:**
+        Customer Analysis:
         - Detailed segmentation of customer base
         - Customer preferences and buying behavior
         - Key market demographics
         
-        **Sales Distribution:**
+        Sales Distribution:
         - Channel performance analysis
         - Geographic distribution of sales
         - Revenue contribution by segment
