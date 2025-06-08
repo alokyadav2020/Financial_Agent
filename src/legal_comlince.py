@@ -132,7 +132,7 @@ class LegalComplianceAssessment:
                     {"role": "system", "content": "You are an experienced MBB consultant specializing in legal and compliance assessment."},
                     {"role": "user", "content": formatted_prompt}
                 ],
-                max_tokens=1000,
+                max_tokens=8000,
                 temperature=0.7
             )
             return response.choices[0].message.content

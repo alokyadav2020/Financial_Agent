@@ -34,7 +34,7 @@ class MBBConsultant:
             response = self.client.chat_completion(
                 model=st.secrets["hf_model"],
                 messages=messages,
-                max_tokens=1000,
+                max_tokens=8000,
                 temperature=0.7
             )
             return response.choices[0].message.content
