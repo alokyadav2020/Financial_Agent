@@ -215,7 +215,7 @@ Ensure the language is concise, data-driven, professional, and focuses on action
                     {"role": "system", "content": system_message},
                     {"role": "user", "content": user_message}
                 ],
-                max_tokens=1500,  # Increased max_tokens for potentially detailed analysis
+                max_tokens=8000,  # Increased max_tokens for potentially detailed analysis
                 temperature=0.6, # Slightly lower temp for more focused output
                 # model=self.model_name # Model defined during init
                 # Ensure you pass the model name if InferenceClient requires it per call,
@@ -240,23 +240,14 @@ def risk_assessment_report(
                     industry_type):
     
 
-    # --- Session State Initialization ---
-    if 'assessment' not in st.session_state:
-        # Ensure secrets are loaded before initializing
-        if "hf_token" not in st.secrets or "hf_model" not in st.secrets:
-             st.error("ERROR: 'hf_token' or 'hf_model' not found in Streamlit Secrets. Please configure secrets.")
-             st.stop() # Stop execution if secrets are missing
-        st.session_state.assessment = OperationalAssessment()
+    assessment = OperationalAssessment()
 
-    if 'analysis_history' not in st.session_state:
-        st.session_state.analysis_history = []
-    prompt_key = f"prompt_input_{industry_type}_{selected_phase}_{selected_task}"
-    default_prompt = st.session_state.assessment.get_default_prompt(
+    default_prompt = assessment.get_default_prompt(
         selected_phase,
         selected_task,
         industry_type
     )
-    analysis = st.session_state.assessment.generate_analysis(
+    analysis = assessment.generate_analysis(
                     default_prompt,
                     selected_phase,
                     selected_task,
