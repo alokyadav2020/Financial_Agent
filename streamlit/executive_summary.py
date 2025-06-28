@@ -4,6 +4,7 @@ import streamlit as st
 import json
 from huggingface_hub import InferenceClient
 from datetime import datetime
+from src.db.sql_operation import execute_query, fetch_query
 
 def get_default_financial_data():
     """Return default financial data template"""
@@ -300,7 +301,13 @@ Key Principles for your response:
 
         # Prompt input
         if 'user_prompt' not in st.session_state:
-            st.session_state.user_prompt = default_prompt
+            data  = fetch_query("SELECT [executive-summary] FROM prompt_valuation_reports WHERE id = ?",(1,))
+            if data:
+                st.session_state.user_prompt = data[0]['executive-summary']
+            else:
+                pass
+               # st.session_state.user_prompt = default_prompt   
+            #st.session_state.user_prompt = default_prompt
 
         st.session_state.user_prompt = st.text_area(
             "Modify the prompt template:",
@@ -311,9 +318,32 @@ Key Principles for your response:
 
         # Reset prompt button
         if st.button("Reset Prompt to Default"):
-            st.session_state.user_prompt = default_prompt
+            #st.session_state.user_prompt = default_prompt
+            id = 1
+            try:
+                update_query = """
+                    UPDATE prompt_valuation_reports
+                    SET [executive-summary] = ?
+                    WHERE id = ?
+                """
+                params = (st.session_state.user_prompt, id)
+                execute_query(update_query, params)
+                st.success("Data updated successfully!")
+            except Exception as e:
+                st.error(f"Update failed: {e}")
             st.success("Prompt reset to default!")
             st.rerun()
+
+        try:
+            id = 1
+            data = fetch_query("SELECT [executive-summary] FROM prompt_valuation_reports WHERE id = ?", (id,))
+            if data:
+                st.write("Executive Summary:")
+                st.write(data[0]["executive-summary"])
+            else:
+                st.warning("No report found.")
+        except Exception as e:
+            st.error(f"Error fetching data: {e}")    
 
     with report_tab:
         st.header("Generated Financial Report")

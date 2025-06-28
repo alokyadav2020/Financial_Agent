@@ -15,4 +15,5 @@ Pillow
 mcp
 python-dotenv
 openai
+pyodbc
 -e .

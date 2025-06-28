@@ -1,0 +1,51 @@
+from src.db.connection import connection_
+import logging
+
+# --- Setup logging ---
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+# Optional: Log to file
+file_handler = logging.FileHandler("sql_operations.log")
+file_handler.setLevel(logging.ERROR)  # Log only errors to file
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
+
+
+def execute_query(query, params=None):
+    """
+    Execute INSERT, UPDATE, DELETE, etc.
+    """
+    try:
+        with connection_() as conn:
+            cursor = conn.cursor()
+            if params:
+                cursor.execute(query, params)
+            else:
+                cursor.execute(query)
+            conn.commit()
+    except Exception as e:
+        logger.error(f"❌ Query failed: {query}\nParams: {params}\nError: {e}")
+        raise e
+
+
+def fetch_query(query, params=None):
+    """
+    Execute SELECT queries and return result as list of dicts.
+    """
+    try:
+        with connection_() as conn:
+            cursor = conn.cursor()
+            if params:
+                cursor.execute(query, params)
+            else:
+                cursor.execute(query)
+
+            columns = [col[0] for col in cursor.description]
+            results = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            return results
+
+    except Exception as e:
+        logger.error(f"❌ SELECT query failed: {query}\nParams: {params}\nError: {e}")
+        raise e
