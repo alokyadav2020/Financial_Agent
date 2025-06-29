@@ -13,5 +13,6 @@ openpyxl
 pandas
 Pillow
 python-dotenv
-pyodbc
+pymssql
+sqlalchemy
 -e .

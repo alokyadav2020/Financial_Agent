@@ -5,6 +5,7 @@ import json
 from huggingface_hub import InferenceClient
 from datetime import datetime
 from src.db.sql_operation import execute_query, fetch_query
+from sqlalchemy import text
 
 def get_default_financial_data():
     """Return default financial data template"""
@@ -301,7 +302,10 @@ Key Principles for your response:
 
         # Prompt input
         if 'user_prompt' not in st.session_state:
-            data  = fetch_query("SELECT [executive-summary] FROM prompt_valuation_reports WHERE id = ?",(1,))
+            query = text("SELECT [executive-summary] FROM prompt_valuation_reports WHERE id = :id")
+            params = {"id": 1}
+            data = fetch_query(query, params)
+            
             if data:
                 st.session_state.user_prompt = data[0]['executive-summary']
             else:
@@ -321,12 +325,15 @@ Key Principles for your response:
             #st.session_state.user_prompt = default_prompt
             id = 1
             try:
-                update_query = """
+                update_query = text("""
                     UPDATE prompt_valuation_reports
-                    SET [executive-summary] = ?
-                    WHERE id = ?
-                """
-                params = (st.session_state.user_prompt, id)
+                    SET [executive-summary] = :summary
+                    WHERE id = :id
+                """)
+                params = {
+                    "summary": st.session_state.user_prompt,
+                    "id": id
+                }
                 execute_query(update_query, params)
                 st.success("Data updated successfully!")
             except Exception as e:
@@ -335,8 +342,9 @@ Key Principles for your response:
             st.rerun()
 
         try:
-            id = 1
-            data = fetch_query("SELECT [executive-summary] FROM prompt_valuation_reports WHERE id = ?", (id,))
+            query = text("SELECT [executive-summary] FROM prompt_valuation_reports WHERE id = :id")
+            params = {"id": 1}
+            data = fetch_query(query, params)
             if data:
                 st.write("Executive Summary:")
                 st.write(data[0]["executive-summary"])
