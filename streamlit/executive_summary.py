@@ -93,7 +93,7 @@ def generate_report(prompt, metrics):
 
     messages = [
         {"role": "system", "content": "You are financial report expert."},
-        {"role": "user", "content": prompt.format(metrics=metrics)},
+        {"role": "user", "content": f"{prompt} :: here all releted metrics data : {metrics}"},
     ]
 
     response_format = {
