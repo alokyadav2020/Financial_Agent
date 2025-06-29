@@ -1,5 +1,5 @@
 
-
+import os
 import streamlit as st
 import json
 from huggingface_hub import InferenceClient
@@ -86,9 +86,9 @@ def calculate_key_metrics(data):
 def generate_report(prompt, metrics):
     """Generate financial report using HuggingFace model"""
     client = InferenceClient(
-        #  model=st.secrets["hf_model"],
+        #  model=os.getenv["hf_model"],
         provider="hf-inference",
-        api_key=st.secrets["hf_token"],
+        api_key=os.getenv("hf_token"),
     )
 
     messages = [
@@ -117,7 +117,7 @@ def generate_report(prompt, metrics):
     }
 
     response = client.chat_completion(
-        model=st.secrets["hf_model"],
+        model=os.getenv("hf_model"),
         messages=messages,
         response_format=response_format,
         max_tokens=8000,

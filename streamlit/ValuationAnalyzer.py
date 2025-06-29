@@ -2,6 +2,7 @@ import streamlit as st
 import json
 from datetime import datetime
 from huggingface_hub import InferenceClient
+import os
 
 class ValuationAnalyzer:
     def generate_valuation_dummy_data(self):
@@ -52,7 +53,7 @@ def generate_report(prompt, data):
     """Generate valuation report using HuggingFace model."""
     client = InferenceClient(
         provider="hf-inference",
-        api_key=st.secrets["hf_token"],
+        api_key=os.getenv("hf_token"),
     )
 
     # Include timestamp and username in the context
@@ -67,7 +68,7 @@ def generate_report(prompt, data):
     ]
 
     response = client.chat_completion(
-        model=st.secrets["hf_model"],
+        model=os.getenv("hf_model"),
         messages=messages,
         max_tokens=8000,
         temperature=0.1,

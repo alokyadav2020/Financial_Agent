@@ -2,6 +2,7 @@ import streamlit as st
 import json
 from datetime import datetime
 from huggingface_hub import InferenceClient
+import os
 
 class DCFCalculator:
     def present_value(self, future_cash_flow, discount_rate, year):
@@ -43,7 +44,7 @@ def generate_report(prompt, data):
     """Generate DCF report using HuggingFace model."""
     client = InferenceClient(
         provider="hf-inference",
-        api_key=st.secrets["hf_token"],
+        api_key=os.getenv("hf_token"),
     )
 
     messages = [
@@ -52,7 +53,7 @@ def generate_report(prompt, data):
     ]
 
     response = client.chat_completion(
-        model=st.secrets["hf_model"],
+        model=os.getenv("hf_model"),
         messages=messages,
         max_tokens=8000,
         temperature=0.1,

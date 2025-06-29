@@ -2,6 +2,7 @@ import streamlit as st
 import json
 from datetime import datetime
 from huggingface_hub import InferenceClient
+import os
 
 class CCACalculator:
     def calculate_ebitda(self, revenue, cogs, operating_expenses, depreciation, amortization):
@@ -51,7 +52,7 @@ def generate_report(prompt, data):
     """Generate CCA report using HuggingFace model."""
     client = InferenceClient(
         provider="hf-inference",
-        api_key=st.secrets["hf_token"],
+        api_key=st.secrets("hf_token"),
     )
 
     messages = [
@@ -60,7 +61,7 @@ def generate_report(prompt, data):
     ]
 
     response = client.chat_completion(
-        model=st.secrets["hf_model"],
+        model=st.secrets("hf_model"),
         messages=messages,
         max_tokens=8000,
         temperature=0.1,

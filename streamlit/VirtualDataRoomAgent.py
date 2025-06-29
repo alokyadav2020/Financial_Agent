@@ -74,7 +74,7 @@
 # def get_hf_token():
 #     # Try to get from Streamlit secrets first (for deployed apps)
 #     try:
-#         return st.secrets["HUGGINGFACE_TOKEN"]
+#         return os.getenv["HUGGINGFACE_TOKEN"]
 #     except (FileNotFoundError, KeyError):
 #         # Fallback to session state if already entered, then to text input
 #         if "hf_token" in st.session_state and st.session_state.hf_token:
@@ -85,7 +85,7 @@
 #     if api_token:
 #         try:
 #             return InferenceClient(  provider="hf-inference",
-#         api_key=st.secrets["hf_token"],)
+#         api_key=os.getenv["hf_token"],)
 #         except Exception as e:
 #             st.error(f"Failed to initialize LLM client: {e}")
 #             return None
@@ -664,8 +664,8 @@ HF_MODEL = "meta-llama/Llama-3.3-70B-Instruct" # Or your preferred model
 
 def get_hf_token():
     try:
-        # Prioritize st.secrets
-        return st.secrets["hf_token"]
+        # Prioritize os.getenv
+        return os.getenv("hf_token")
     except (AttributeError, KeyError, FileNotFoundError): # FileNotFoundError for local secrets.toml
         # Fallback to session state if already entered via sidebar
         if "hf_token_manual" in st.session_state and st.session_state.hf_token_manual:
@@ -678,7 +678,7 @@ def initialize_llm_client(api_token_value):
             # Use the specified InferenceClient instantiation
             client = InferenceClient(
                 
-                model=st.secrets["hf_model"], # Ensure HF_MODEL is defined
+                model=os.getenv("hf_model"), # Ensure HF_MODEL is defined
                 provider="hf-inference", # This might be for specific HF libraries, usually token is enough
                 token=api_token_value # Renamed from api_key for clarity with InferenceClient param
             )
@@ -750,7 +750,7 @@ st.markdown("""
 
 # --- Sidebar for HF Token Fallback ---
 st.sidebar.header("LLM Configuration")
-st.sidebar.caption(f"Attempting to use Hugging Face token from `st.secrets`. Using model: `{HF_MODEL}`")
+st.sidebar.caption(f"Attempting to use Hugging Face token from `os.getenv`. Using model: `{HF_MODEL}`")
 
 # Initialize session state for token and client if not already present
 if 'hf_api_token' not in st.session_state:
@@ -758,15 +758,15 @@ if 'hf_api_token' not in st.session_state:
 
 if not st.session_state.hf_api_token:
     st.session_state.hf_token_manual = st.sidebar.text_input(
-        "Enter Hugging Face API Token (if not in st.secrets)",
+        "Enter Hugging Face API Token (if not in os.getenv)",
         type="password",
         key="hf_token_manual_input",
-        help="Your Hugging Face API token is required if not found in st.secrets."
+        help="Your Hugging Face API token is required if not found in os.getenv."
     )
     if st.session_state.hf_token_manual:
         st.session_state.hf_api_token = st.session_state.hf_token_manual
 else:
-    st.sidebar.success("Hugging Face token loaded (likely from st.secrets).")
+    st.sidebar.success("Hugging Face token loaded (likely from os.getenv).")
 
 
 if 'llm_client' not in st.session_state:

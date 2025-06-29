@@ -6,18 +6,19 @@ import streamlit as st
 from huggingface_hub import InferenceClient
 # Using a fixed datetime for demonstration as requested
 from datetime import datetime
+import os
 
 class OperationalAssessment:
     def __init__(self):
-        # Use st.secrets for sensitive information like API keys
+        # Use os.getenv for sensitive information like API keys
         # Ensure you have hf_token and hf_model defined in your Streamlit secrets
         try:
             self.client = InferenceClient(
                 provider="hf-inference",
-                model=st.secrets["hf_model"], # Added model here for clarity, though chat_completion needs it too
-                token=st.secrets["hf_token"] # Use token argument
+                model=os.getenv("hf_model"), # Added model here for clarity, though chat_completion needs it too
+                token=os.getenv("hf_token") # Use token argument
             )
-            self.model_name = st.secrets["hf_model"]
+            self.model_name = os.getenv("hf_model")
         except KeyError as e:
             st.error(f"Missing Streamlit secret: {e}. Please add 'hf_token' and 'hf_model' to your secrets.")
             st.stop()
@@ -245,7 +246,7 @@ def main():
     # --- Session State Initialization ---
     if 'assessment' not in st.session_state:
         # Ensure secrets are loaded before initializing
-        if "hf_token" not in st.secrets or "hf_model" not in st.secrets:
+        if "hf_token" not in os.getenv or "hf_model" not in os.getenv:
              st.error("ERROR: 'hf_token' or 'hf_model' not found in Streamlit Secrets. Please configure secrets.")
              st.stop() # Stop execution if secrets are missing
         st.session_state.assessment = OperationalAssessment()

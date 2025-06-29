@@ -1,6 +1,7 @@
 import streamlit as st
 from huggingface_hub import InferenceClient
 import json
+import os
 
 
 # Function to calculate margins for P&L
@@ -25,7 +26,7 @@ def generate_report(prompt, metrics):
     """Generate financial report using HuggingFace model."""
     client = InferenceClient(
         provider="hf-inference",
-        api_key=st.secrets["hf_token"],
+        api_key=os.getenv("hf_token"),
     )
 
     messages = [
@@ -34,7 +35,7 @@ def generate_report(prompt, metrics):
     ]
 
     response = client.chat_completion(
-        model=st.secrets["hf_model"],
+        model=os.getenv("hf_model"),
         messages=messages,
         max_tokens=8000,
         temperature=0.1,

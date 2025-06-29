@@ -8,11 +8,11 @@
 
 # def initialize_clients():
 #     """Initialize API clients"""
-#     scrapegraph_client = Client(api_key=st.secrets["scrapegraph_api_key"])
+#     scrapegraph_client = Client(api_key=os.getenv["scrapegraph_api_key"])
 #     hf_client = InferenceClient(
-#         model=st.secrets["hf_model"],
+#         model=os.getenv["hf_model"],
 #         provider="hf-inference",
-#         api_key=st.secrets["hf_token"],
+#         api_key=os.getenv["hf_token"],
 #     )
 #     return scrapegraph_client, hf_client
 
@@ -46,7 +46,7 @@
 #     # }
 
 #     response = client.chat_completion(
-#         model=st.secrets["hf_model"],
+#         model=os.getenv["hf_model"],
 #         messages=messages,
 #         # response_format=response_format,
 #         max_tokens=8000,
@@ -475,14 +475,15 @@ import streamlit as st
 import json
 from huggingface_hub import InferenceClient
 from scrapegraph_py import Client # Assuming this is the correct import
+import os
 
 def initialize_clients():
     """Initialize API clients"""
-    scrapegraph_client = Client(api_key=st.secrets["scrapegraph_api_key"])
+    scrapegraph_client = Client(api_key=os.getenv("scrapegraph_api_key"))
     hf_client = InferenceClient(
         provider="hf-inference",
-        model=st.secrets["hf_model"],
-        token=st.secrets["hf_token"],
+        model=os.getenv("hf_model"),
+        token=os.getenv("hf_token"),
     )
     return scrapegraph_client, hf_client
 

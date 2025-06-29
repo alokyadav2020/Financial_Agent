@@ -6,6 +6,7 @@ from agno.tools.yfinance import YFinanceTools
 from agno.team import Team
 from agno.tools.serpapi import SerpApiTools
 from agno.tools.reasoning import ReasoningTools
+import os
  # Replace with actual tool imports
 
 def market_analysis_report(topic, research_agent_prompt,writer_agent_prompt, team_agent_prompt):
@@ -14,8 +15,8 @@ def market_analysis_report(topic, research_agent_prompt,writer_agent_prompt, tea
     """
     # Configure the LLM model
     model_config = OpenAIChat(
-        id=st.secrets["openai_model"],
-        api_key=st.secrets["open_api_key"],
+        id=os.getenv("openai_model"),
+        api_key=os.getenv("open_api_key"),
     )
 
     # Define web agent for market research
@@ -23,7 +24,7 @@ def market_analysis_report(topic, research_agent_prompt,writer_agent_prompt, tea
         name="Web Agent Researcher",
         role="Market Researcher from Internet",
         model=model_config,
-        tools=[SerpApiTools(api_key=st.secrets["SerpApi"]),DuckDuckGoTools()],
+        tools=[SerpApiTools(api_key=os.getenv("SerpApi")),DuckDuckGoTools()],
         instructions=research_agent_prompt,
         markdown=True,  # Enable markdown rendering for the response
     )

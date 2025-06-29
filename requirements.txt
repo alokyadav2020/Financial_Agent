@@ -12,8 +12,6 @@ python-docx
 openpyxl
 pandas
 Pillow
-mcp
 python-dotenv
-openai
 pyodbc
 -e .

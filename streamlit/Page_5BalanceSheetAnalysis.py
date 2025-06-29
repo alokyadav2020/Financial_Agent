@@ -3,6 +3,7 @@ import random
 from datetime import datetime
 from huggingface_hub import InferenceClient
 import json
+import os
 
 class FinancialReportGenerator:
     def generate_dummy_financial_data(self, years):
@@ -55,7 +56,7 @@ def generate_report(prompt, data):
     """Generate financial report using HuggingFace model."""
     client = InferenceClient(
         provider="hf-inference",
-        api_key=st.secrets["hf_token"],
+        api_key=os.getenv("hf_token"),
     )
 
     messages = [
@@ -64,7 +65,7 @@ def generate_report(prompt, data):
     ]
 
     response = client.chat_completion(
-        model=st.secrets["hf_model"],
+        model=os.getenv("hf_model"),
         messages=messages,
         max_tokens=8000,
         temperature=0.1,

@@ -2,12 +2,14 @@ import streamlit as st
 from huggingface_hub import InferenceClient
 from datetime import datetime
 import json
+import os
+
 
 class MBBConsultant:
     def __init__(self):
         self.client = InferenceClient(
             provider="hf-inference",
-            api_key=st.secrets["hf_token"]
+            api_key=os.getenv("hf_token")
         )
 
     def generate_analysis(self, prompt, phase, task):
@@ -32,7 +34,7 @@ class MBBConsultant:
 
         try:
             response = self.client.chat_completion(
-                model=st.secrets["hf_model"],
+                model=os.getenv("hf_model"),
                 messages=messages,
                 max_tokens=1000,
                 temperature=0.7

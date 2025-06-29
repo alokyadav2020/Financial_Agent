@@ -3,12 +3,13 @@ from huggingface_hub import InferenceClient
 import PyPDF2
 import io
 from datetime import datetime
+import os
 
 # --- Configuration & Secrets ---
 # Ensure these secrets are set in your Streamlit Cloud environment or locally
 try:
-    HF_TOKEN = st.secrets["hf_token"]
-    HF_MODEL = st.secrets["hf_model"]
+    HF_TOKEN = os.getenv("hf_token")
+    HF_MODEL = os.getenv("hf_model")
 except KeyError:
     st.error("Please provide 'hf_token' and 'hf_model' in your Streamlit secrets.")
     st.stop() # Stop execution if secrets are missing

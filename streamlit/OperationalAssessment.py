@@ -2,12 +2,13 @@ import streamlit as st
 from huggingface_hub import InferenceClient
 from datetime import datetime
 import json
+import os
 
 class OperationalAssessment:
     def __init__(self):
         self.client = InferenceClient(
             provider="hf-inference",
-            api_key=st.secrets["hf_token"]
+            api_key=os.getenv("hf_token")
         )
         self.phases = {
             "Phase 1": {
@@ -59,7 +60,7 @@ class OperationalAssessment:
 
         try:
             response = self.client.chat_completion(
-                model=st.secrets["hf_model"],
+                model=os.getenv("hf_model"),
                 messages=[
                     {"role": "system", "content": "You are an experienced MBB consultant specializing in operational strategy."},
                     {"role": "user", "content": formatted_prompt}
