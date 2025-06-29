@@ -5,16 +5,14 @@ import os
 
 def get_connection():
    
-    conn_str = f'''
-        DRIVER={os.getenv("driver")};
-        SERVER={os.getenv("server")};
-        DATABASE={os.getenv("database")};
-        UID={os.getenv("username")};
-        PWD={os.getenv("password")};
-        Encrypt=yes;
-        TrustServerCertificate=no;
-        Connection Timeout=30;
-    '''
+    # 
+    conn_str = os.getenv("AZURE_SQL_CONNECTION_STRING")
+
+    if not conn_str:
+        raise ValueError("Connection string not found in environment variables!")
+
+    # Optional: fix driver string format if needed
+    conn_str = conn_str.replace("Driver={ODBC Driver 18 for SQL Server}", "DRIVER={ODBC Driver 18 for SQL Server}")
     return pyodbc.connect(conn_str)
 
 
