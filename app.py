@@ -8,7 +8,8 @@ if "role" not in st.session_state:
 
 ROLES = [None,"Admin"]
 
-
+PASSWORD = os.getenv("PASSWORD")
+USER = os.getenv("USER")
 def login():
 
     # st.header("Log in")
@@ -26,7 +27,7 @@ def login():
         # Check if the form was submitted
         if submit_button:
 
-            if st.secrets['USER'] == username and st.secrets['PASSWORD'] == password:
+            if USER == username and PASSWORD == password:
                 st.session_state.role = "Admin"
                 st.success("Login successful!")
                 st.session_state["logged_in"] = True
