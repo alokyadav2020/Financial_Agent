@@ -18,7 +18,7 @@ def initialize_clients():
     # )
 
     client = AzureOpenAI(
-        azure_endpoint=os.getenv("ENDPOINT_URL"),
+        azure_endpoint= os.getenv("ENDPOINT_URL"),
         azure_deployment=os.getenv("DEPLOYMENT_NAME"),
         api_key=os.getenv("AZURE_OPENAI_API_KEY"),
         api_version="2025-01-01-preview"

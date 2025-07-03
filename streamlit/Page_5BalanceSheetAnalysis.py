@@ -4,6 +4,8 @@ from datetime import datetime
 from huggingface_hub import InferenceClient
 import json
 import os
+from src.db.sql_operation import execute_query, fetch_query
+from sqlalchemy import text
 
 class FinancialReportGenerator:
     def generate_dummy_financial_data(self, years):
@@ -272,6 +274,15 @@ Additional Explanation of Calculations (MBB Style): Provide detailed explanation
     <|eot_id|><|start_header_id|>assistant<|end_header_id|>
     """
 
+    query = text("SELECT [balance_sheet] FROM prompt_valuation_reports WHERE id = :id")
+    params = {"id": 1}
+    data = fetch_query(query, params)
+    
+    if data:
+        default_prompt= data[0]['balance_sheet']
+    else:
+        pass
+
     # Allow user to customize prompt
     st.subheader("Customize Report Generation Prompt")
     user_prompt = st.text_area(
@@ -280,6 +291,43 @@ Additional Explanation of Calculations (MBB Style): Provide detailed explanation
         height=400,
         key="prompt_input"
     )
+
+
+
+    if st.button("Save promt"):
+            #st.session_state.user_prompt = default_prompt
+        id = 1
+        try:
+            update_query = text("""
+                UPDATE prompt_valuation_reports
+                SET [balance_sheet] = :summary
+                WHERE id = :id
+            """)
+            params = {
+                "summary": user_prompt,
+                "id": id
+            }
+            execute_query(update_query, params)
+            st.success("Data updated successfully!")
+        except Exception as e:
+            st.error(f"Update failed: {e}")
+        st.success("Prompt reset to default!")
+        st.rerun()
+
+        try:
+            query = text("SELECT [balance_sheet] FROM prompt_valuation_reports WHERE id = :id")
+            params = {"id": 1}
+            data = fetch_query(query, params)
+            if data:
+                st.write("Executive Summary:")
+                st.write(data[0]["balance_sheet"])
+            else:
+                st.warning("No report found.")
+        except Exception as e:
+            st.error(f"Error fetching data: {e}")
+
+
+    st.markdown("----")        
 
     # Add controls for report generation
     col1, col2 = st.columns(2)

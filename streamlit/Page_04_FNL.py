@@ -2,7 +2,8 @@ import streamlit as st
 from huggingface_hub import InferenceClient
 import json
 import os
-
+from src.db.sql_operation import execute_query, fetch_query
+from sqlalchemy import text
 
 # Function to calculate margins for P&L
 def calculate_margins_for_pnl(financial_data):
@@ -240,12 +241,54 @@ def main():
 
     # Allow user to customize prompt
     st.subheader("Customize the Prompt")
+
+    query = text("SELECT [fla] FROM prompt_valuation_reports WHERE id = :id")
+    params = {"id": 1}
+    data = fetch_query(query, params)
+    research_agent_prompt=""
+    
+    if data:
+        retrieved_scraping_prompt = data[0]['fla']
+        research_agent_prompt = retrieved_scraping_prompt
+        
+        
+    else:
+        research_agent_prompt=DEFAULT_PROMPT
+
+
     user_prompt = st.text_area(
         "Modify the prompt below to test with various instructions:",
-        DEFAULT_PROMPT,
+        research_agent_prompt,
         height=300,
     )
 
+
+
+    if st.button("Save Prompt"):
+        try:
+            # Corrected UPDATE query with WHERE clause
+            query = text("UPDATE prompt_valuation_reports SET [fla] = :prompt WHERE id = :id")
+            params = {
+                "prompt": user_prompt,
+                "id": 1  # Make sure this matches the record you want to update
+            }
+            execute_query(query, params)
+            st.success("Prompt saved successfully!")
+
+            # Retrieve the saved prompt for confirmation
+            query = text("SELECT [fla] FROM prompt_valuation_reports WHERE id = :id")
+            params = {"id": 1}
+            data = fetch_query(query, params)
+            
+            if data:
+                retrieved_scraping_prompt = data[0]['fla']
+                st.write(retrieved_scraping_prompt)
+            else:
+                st.warning("No data found for the given ID.")
+        except Exception as e:
+            st.error(f"Database error: {e}")
+
+    st.markdown("---")
     # Generate report button
     if st.button("Generate Report"):
         with st.spinner("Generating the P&L report..."):
