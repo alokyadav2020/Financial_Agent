@@ -6,7 +6,8 @@ import os
 from openai import AzureOpenAI 
 from src.db.sql_operation import execute_query, fetch_query
 from sqlalchemy import text
-
+from dotenv import load_dotenv
+load_dotenv()
 def initialize_clients():
     """Initialize API clients"""
     scrapegraph_client = Client(api_key=os.getenv("scrapegraph_api_key"))

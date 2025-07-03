@@ -1,18 +1,31 @@
 import streamlit as st
 from agno.agent import Agent
 from agno.models.openai import OpenAIChat
+# from agno.models.azure import ai_foundry
+from agno.models.azure import AzureOpenAI
 from agno.tools.duckduckgo import DuckDuckGoTools
 from agno.tools.yfinance import YFinanceTools
 from agno.team import Team
 from agno.tools.serpapi import SerpApiTools
 from agno.tools.reasoning import ReasoningTools
+from src.db.sql_operation import execute_query, fetch_query
+from sqlalchemy import text
 import os
+from dotenv import load_dotenv
+load_dotenv()
  # Replace with actual tool imports
 
 def market_analysis_report(topic, research_agent_prompt,writer_agent_prompt, team_agent_prompt):
     """
     Generates a market analysis report dynamically based on the user's topic and instructions.
     """
+    
+    azure_model_config= AzureOpenAI(
+        azure_endpoint=os.getenv("ENDPOINT_URL"),
+        azure_deployment=os.getenv("DEPLOYMENT_NAME"),
+        api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+        api_version="2025-01-01-preview"
+    )
     # Configure the LLM model
     model_config = OpenAIChat(
         id=os.getenv("openai_model"),
@@ -23,7 +36,7 @@ def market_analysis_report(topic, research_agent_prompt,writer_agent_prompt, tea
     web_agent = Agent(
         name="Web Agent Researcher",
         role="Market Researcher from Internet",
-        model=model_config,
+        model=azure_model_config,
         tools=[SerpApiTools(api_key=os.getenv("SerpApi")),DuckDuckGoTools()],
         instructions=research_agent_prompt,
         markdown=True,  # Enable markdown rendering for the response
@@ -33,7 +46,7 @@ def market_analysis_report(topic, research_agent_prompt,writer_agent_prompt, tea
     finance_report_writer_agent = Agent(
         name="Finance Report Writer Agent",
         role="Senior Market Analyst",
-        model=model_config,
+        model=azure_model_config,
         tools=[YFinanceTools(stock_price=True, analyst_recommendations=True, company_info=True),ReasoningTools(add_instructions=True),],
         instructions=writer_agent_prompt,reasoning=True,markdown=True,
     )
@@ -41,7 +54,7 @@ def market_analysis_report(topic, research_agent_prompt,writer_agent_prompt, tea
     # Combine agents into a team
     agent_team = Team(
         members=[web_agent, finance_report_writer_agent],
-        model=model_config,
+        model=azure_model_config,
         instructions=team_agent_prompt,
         reasoning=True
     )
@@ -63,7 +76,7 @@ def main():
     # Sidebar for user inputs
     st.sidebar.header("User Inputs")
     topic = st.sidebar.text_input("Enter a topic for the market analysis:", "AI in Healthcare")
-    research_agent_prompt = """
+    research_agent_prompt_ = """
        **Industry Overview:** Current state and future outlook of the industry. (IBIS)
         **Market Share Analysis:** Pie charts illustrating the company's share relative to competitors.
         **SWOT Analysis:** Matrix highlighting strengths, weaknesses, opportunities, and threats.
@@ -72,11 +85,55 @@ def main():
 
 
     """
-    research_agent_prompt_txt = st.sidebar.text_area(
+
+    query = text("SELECT [market_analysis_research_agent] FROM prompt_valuation_reports WHERE id = :id")
+    params = {"id": 1}
+    data = fetch_query(query, params)
+    research_agent_prompt=""
+    
+    if data:
+        retrieved_scraping_prompt = data[0]['market_analysis_research_agent']
+        research_agent_prompt = retrieved_scraping_prompt
+        
+        
+    else:
+        research_agent_prompt=research_agent_prompt_
+
+    research_agent_prompt_txt = st.text_area(
         "Research Agent Instructions:",
         research_agent_prompt,
         height=400
     )
+
+    if st.button("Save Research Agent Prompt"):
+        try:
+            # Corrected UPDATE query with WHERE clause
+            query = text("UPDATE prompt_valuation_reports SET [market_analysis_research_agent] = :prompt WHERE id = :id")
+            params = {
+                "prompt": research_agent_prompt_txt,
+                "id": 1  # Make sure this matches the record you want to update
+            }
+            execute_query(query, params)
+            st.success("Prompt saved successfully!")
+
+            # Retrieve the saved prompt for confirmation
+            query = text("SELECT [market_analysis_research_agent] FROM prompt_valuation_reports WHERE id = :id")
+            params = {"id": 1}
+            data = fetch_query(query, params)
+            
+            if data:
+                retrieved_scraping_prompt = data[0]['market_analysis_research_agent']
+                st.write(retrieved_scraping_prompt)
+            else:
+                st.warning("No data found for the given ID.")
+        except Exception as e:
+            st.error(f"Database error: {e}")
+
+    st.markdown("---")
+    # st.header("Section 1")         
+
+
+
 
     writer_agent_prompt = """  
   Objective: To conduct a thorough market analysis for the industrial components sector, with a specific focus on the automotive and aerospace sub-segments relevant to company. The goal is to provide actionable insights into the industry landscape, competitive dynamics, customer behavior, and future trends to inform Acme's strategic decision-making.
@@ -150,11 +207,59 @@ Source: Link back to the relevant data.
 
  """
     
-    writer_agent_prompt_txt = st.sidebar.text_area(
+    query = text("SELECT [market_analysis_writer_agent] FROM prompt_valuation_reports WHERE id = :id")
+    params = {"id": 1}
+    data = fetch_query(query, params)
+    writer_agent_prompt_=""
+    
+    if data:
+        retrieved_data = data[0]['market_analysis_writer_agent']
+        writer_agent_prompt_ = retrieved_data
+        
+        
+    else:
+        writer_agent_prompt_=writer_agent_prompt
+
+    
+    writer_agent_prompt_txt = st.text_area(
         "Report Writer Agent Instructions:",
-        writer_agent_prompt,
+        writer_agent_prompt_,
         height=400
     )
+
+
+
+
+
+
+
+    if st.button("Save Writer Agent Prompt"):
+        try:
+            # Corrected UPDATE query with WHERE clause
+            query = text("UPDATE prompt_valuation_reports SET [market_analysis_writer_agent] = :prompt WHERE id = :id")
+            params = {
+                "prompt": writer_agent_prompt_txt,
+                "id": 1  # Make sure this matches the record you want to update
+            }
+            execute_query(query, params)
+            st.success("Prompt saved successfully!")
+
+            # Retrieve the saved prompt for confirmation
+            query = text("SELECT [market_analysis_writer_agent] FROM prompt_valuation_reports WHERE id = :id")
+            params = {"id": 1}
+            data = fetch_query(query, params)
+            
+            if data:
+                retrieved_scraping_prompt = data[0]['market_analysis_writer_agent']
+                st.write(retrieved_scraping_prompt)
+            else:
+                st.warning("No data found for the given ID.")
+        except Exception as e:
+            st.error(f"Database error: {e}")
+
+
+    st.markdown("---")
+    # st.header("Section 2")        
 
     team_agent_prompt = """
    Collaborative Market Research Team Prompt:
@@ -198,12 +303,55 @@ The Finance Report Writer Agent will receive the compiled data from the Web Agen
 The Finance Report Writer Agent will interpret, synthesize, and structure the information into the comprehensive market research report, focusing on actionable insights for company.
 
     """
-    team_agent_prompt_txt = st.sidebar.text_area(
+
+
+    query = text("SELECT [market_analysis_team_agents] FROM prompt_valuation_reports WHERE id = :id")
+    params = {"id": 1}
+    data = fetch_query(query, params)
+    team_agent_prompt_=""
+    
+    if data:
+        retrieved_data = data[0]['market_analysis_team_agents']
+        team_agent_prompt_ = retrieved_data
+        
+        
+    else:
+        team_agent_prompt_=team_agent_prompt
+
+
+
+    team_agent_prompt_txt = st.text_area(
         "team Agent Instructions:",
-        team_agent_prompt,
+        team_agent_prompt_,
         height=400
     )
 
+
+
+    if st.button("Save Team Agent Prompt"):
+        try:
+            # Corrected UPDATE query with WHERE clause
+            query = text("UPDATE prompt_valuation_reports SET [market_analysis_team_agents] = :prompt WHERE id = :id")
+            params = {
+                "prompt": team_agent_prompt_txt,
+                "id": 1  # Make sure this matches the record you want to update
+            }
+            execute_query(query, params)
+            st.success("Prompt saved successfully!")
+
+            # Retrieve the saved prompt for confirmation
+            query = text("SELECT [market_analysis_team_agents] FROM prompt_valuation_reports WHERE id = :id")
+            params = {"id": 1}
+            data = fetch_query(query, params)
+            
+            if data:
+                retrieved_scraping_prompt = data[0]['market_analysis_team_agents']
+                st.write(retrieved_scraping_prompt)
+            else:
+                st.warning("No data found for the given ID.")
+        except Exception as e:
+            st.error(f"Database error: {e}")
+    st.markdown("---")
     # Button to generate the report
     if st.button("Generate Report"):
         with st.spinner("Generating market analysis report..."):
