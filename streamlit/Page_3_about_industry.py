@@ -3,18 +3,26 @@ import json
 from huggingface_hub import InferenceClient
 from scrapegraph_py import Client # Assuming this is the correct import
 import os
+from openai import AzureOpenAI 
 from src.db.sql_operation import execute_query, fetch_query
 from sqlalchemy import text
 
 def initialize_clients():
     """Initialize API clients"""
     scrapegraph_client = Client(api_key=os.getenv("scrapegraph_api_key"))
-    hf_client = InferenceClient(
-        provider="hf-inference",
-        model=os.getenv("hf_model"),
-        token=os.getenv("hf_token"),
+    # hf_client = InferenceClient(
+    #     provider="hf-inference",
+    #     model=os.getenv("hf_model"),
+    #     token=os.getenv("hf_token"),
+    # )
+
+    client = AzureOpenAI(
+        azure_endpoint=os.getenv("ENDPOINT_URL"),
+        azure_deployment=os.getenv("DEPLOYMENT_NAME"),
+        api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+        api_version="2025-01-01-preview"
     )
-    return scrapegraph_client, hf_client
+    return scrapegraph_client, client
 
 def scrape_website_data(client, website_url, user_prompt):
     """Scrape website data using SmartScraper"""
@@ -48,10 +56,10 @@ def generate_report(client, data_company, report_prompt_template):
 
     raw_content = ""
     try:
-        response = client.chat_completion(
+        response = client.chat.completions.create(
+            model="o4-mini",  # Use the deployment name instead of model name
             messages=messages,
-            max_tokens=8192,
-            temperature=0.1,
+            temperature=0.1
         )
         
         raw_content = response.choices[0].message.content
@@ -84,6 +92,43 @@ def generate_report(client, data_company, report_prompt_template):
         st.text_area("LLM Raw Response (if available):", raw_content, height=200)
         return {"error": "LLMProcessingError", "details": str(e)}
 
+    # try:
+    #     response = client.chat_completion(
+    #         messages=messages,
+    #         max_tokens=8192,
+    #         temperature=0.1,
+    #     )
+        
+    #     raw_content = response.choices[0].message.content
+        
+    #     cleaned_content = raw_content.strip()
+    #     if cleaned_content.startswith("```json"):
+    #         cleaned_content = cleaned_content[7:]
+    #         if cleaned_content.endswith("```"):
+    #             cleaned_content = cleaned_content[:-3]
+    #     elif cleaned_content.startswith("```"):
+    #         cleaned_content = cleaned_content[3:]
+    #         if cleaned_content.endswith("```"):
+    #             cleaned_content = cleaned_content[:-3]
+        
+    #     if not cleaned_content.strip():
+    #         st.error("LLM returned empty content after cleaning.")
+    #         st.text_area("LLM Raw Response:", raw_content, height=200)
+    #         return {"error": "LLM returned empty content"}
+
+    #     return json.loads(cleaned_content.strip())
+
+    # except json.JSONDecodeError as e:
+    #     st.error(f"Failed to decode JSON from LLM response: {e}")
+    #     st.text_area("LLM Raw Response (that caused JSON error):", raw_content, height=300)
+    #     return {"error": "JSONDecodeError", "details": str(e), "raw_response": raw_content}
+    # except Exception as e:
+    #     st.error(f"Error during LLM call or processing: {e}")
+    #     if 'response' in locals() and hasattr(response, '__str__'):
+    #          st.text_area("LLM API Response object (on error):", str(response), height=100)
+    #     st.text_area("LLM Raw Response (if available):", raw_content, height=200)
+    #     return {"error": "LLMProcessingError", "details": str(e)}
+
 def main():
     st.set_page_config(layout="wide")
     st.title("Company Analysis Report Generator")
@@ -114,13 +159,16 @@ def main():
 
     if st.button("Save Prompt"):
         try:
-            
-            query = text("INSERT INTO prompt_valuation_reports ([about_company_webscraping]) VALUES(:prompt)")
-                           
-            params = {"prompt": st.session_state.scraping_prompt}
+            # Corrected UPDATE query with WHERE clause
+            query = text("UPDATE prompt_valuation_reports SET [about_company_webscraping] = :prompt WHERE id = :id")
+            params = {
+                "prompt": st.session_state.scraping_prompt,
+                "id": 1  # Make sure this matches the record you want to update
+            }
             execute_query(query, params)
             st.success("Prompt saved successfully!")
 
+            # Retrieve the saved prompt for confirmation
             query = text("SELECT [about_company_webscraping] FROM prompt_valuation_reports WHERE id = :id")
             params = {"id": 1}
             data = fetch_query(query, params)
@@ -317,8 +365,38 @@ For each of the following sections, gather and synthesize information to provide
         default_report_prompt_template_body,
         height=300
     )
+
+    if st.button("Save company Prompt"):
+        try:
+            # Corrected UPDATE query with WHERE clause
+            query = text("UPDATE prompt_valuation_reports SET [about_company_report_generation] = :prompt WHERE id = :id")
+            params = {
+                "prompt": editable_report_prompt_body,
+                "id": 1  # Make sure this matches the record you want to update
+            }
+            execute_query(query, params)
+            st.success("Prompt saved successfully!")
+
+            # Retrieve the saved prompt for confirmation
+            query = text("SELECT [about_company_report_generation] FROM prompt_valuation_reports WHERE id = :id")
+            params = {"id": 1}
+            data = fetch_query(query, params)
+            
+            if data:
+                retrieved_scraping_prompt = data[0]['about_company_report_generation']
+                st.write(retrieved_scraping_prompt)
+            else:
+                st.warning("No data found for the given ID.")
+        except Exception as e:
+            st.error(f"Database error: {e}")
+
+
+
+
     
     final_report_prompt_template = json_instruction_preamble + editable_report_prompt_body
+
+    
 
 
     if st.button("Generate Report"):

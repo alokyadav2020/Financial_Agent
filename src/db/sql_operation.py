@@ -19,10 +19,11 @@ def execute_query(query, params=None):
     """
     try:
         with connection_() as conn:
-            if params:
-                conn.execute(query, params)
-            else:
-                conn.execute(query)
+            with conn.begin():  # Ensures COMMIT
+                if params:
+                    conn.execute(query, params)
+                else:
+                    conn.execute(query)
     except Exception as e:
         logger.error(f"❌ Query failed: {query}\nParams: {params}\nError: {e}")
         raise e
