@@ -58,9 +58,9 @@ def generate_report(client, data_company, report_prompt_template):
     raw_content = ""
     try:
         response = client.chat.completions.create(
-            model="o4-mini",  # Use the deployment name instead of model name
+            model=os.getenv("DEPLOYMENT_NAME"),  # Use the deployment name instead of model name
             messages=messages,
-            temperature=0.1
+            temperature=0.7
         )
         
         raw_content = response.choices[0].message.content

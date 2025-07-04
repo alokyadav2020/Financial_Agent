@@ -4,6 +4,12 @@ from datetime import datetime
 from huggingface_hub import InferenceClient
 import json
 import os
+from src.db.sql_operation import execute_query, fetch_query
+from sqlalchemy import text
+from openai import AzureOpenAI 
+from dotenv import load_dotenv
+load_dotenv()
+
 
 class CashFlowAnalyzer:
     def generate_dummy_cash_flow_data(self, years):
@@ -70,22 +76,36 @@ class CashFlowAnalyzer:
 
 def generate_report(prompt, data):
     """Generate financial report using HuggingFace model."""
-    client = InferenceClient(
-        provider="hf-inference",
-        api_key=os.getenv("hf_token"),
+    # client = InferenceClient(
+    #     provider="hf-inference",
+    #     api_key=os.getenv("hf_token"),
+    # )
+
+    client = AzureOpenAI(
+        azure_endpoint= os.getenv("ENDPOINT_URL"),
+        azure_deployment=os.getenv("DEPLOYMENT_NAME"),
+        api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+        api_version="2025-01-01-preview"
     )
+
 
     messages = [
         {"role": "system", "content": "You are a financial report expert."},
         {"role": "user", "content": prompt.format(json=json.dumps(data, indent=2))},
     ]
 
-    response = client.chat_completion(
-        model=os.getenv("hf_model"),
-        messages=messages,
-        max_tokens=8000,
-        temperature=0.1,
-    )
+    # response = client.chat_completion(
+    #     model=os.getenv("hf_model"),
+    #     messages=messages,
+    #     max_tokens=8000,
+    #     temperature=0.1,
+    # )
+
+    response = client.chat.completions.create(
+            model=os.getenv("DEPLOYMENT_NAME"),  # Use the deployment name instead of model name
+            messages=messages,
+            temperature=0.7
+        )
 
     return response.choices[0].message.content
 

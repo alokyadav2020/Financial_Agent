@@ -24,8 +24,10 @@ def market_analysis_report(topic, research_agent_prompt,writer_agent_prompt, tea
         azure_endpoint=os.getenv("ENDPOINT_URL"),
         azure_deployment=os.getenv("DEPLOYMENT_NAME"),
         api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-        api_version="2025-04-14"
+        api_version="2025-01-01-preview"
     )
+
+   
     # Configure the LLM model
     model_config = OpenAIChat(
         id=os.getenv("openai_model"),
