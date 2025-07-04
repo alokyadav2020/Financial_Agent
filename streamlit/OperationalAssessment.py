@@ -4,12 +4,26 @@ from datetime import datetime
 import json
 import os
 
+from src.db.sql_operation import execute_query, fetch_query
+from sqlalchemy import text
+from openai import AzureOpenAI 
+from dotenv import load_dotenv
+load_dotenv()
+
 class OperationalAssessment:
     def __init__(self):
-        self.client = InferenceClient(
-            provider="hf-inference",
-            api_key=os.getenv("hf_token")
-        )
+        # self.client = InferenceClient(
+        #     provider="hf-inference",
+        #     api_key=os.getenv("hf_token")
+        # )
+        self.client = AzureOpenAI(
+        azure_endpoint= os.getenv("ENDPOINT_URL"),
+        azure_deployment=os.getenv("DEPLOYMENT_NAME"),
+        api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+        api_version="2025-01-01-preview"
+    )
+
+
         self.phases = {
             "Phase 1": {
                 "name": "Business Process Analysis",
@@ -59,15 +73,24 @@ class OperationalAssessment:
         """
 
         try:
-            response = self.client.chat_completion(
-                model=os.getenv("hf_model"),
-                messages=[
+            # response = self.client.chat_completion(
+            #     model=os.getenv("hf_model"),
+            #     ,
+            #     max_tokens=1000,
+            #     temperature=0.7
+            # )
+
+            messages=[
                     {"role": "system", "content": "You are an experienced MBB consultant specializing in operational strategy."},
                     {"role": "user", "content": formatted_prompt}
-                ],
-                max_tokens=1000,
-                temperature=0.7
-            )
+                ]
+
+
+            response = self.client.chat.completions.create(
+            model=os.getenv("DEPLOYMENT_NAME"),  # Use the deployment name instead of model name
+            messages=messages,
+            temperature=0.7
+        )
             return response.choices[0].message.content
         except Exception as e:
             return f"Error generating analysis: {str(e)}"

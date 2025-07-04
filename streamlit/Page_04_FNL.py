@@ -45,6 +45,7 @@ def generate_report(prompt, metrics):
         {"role": "system", "content": "You are a financial report expert."},
         {"role": "user", "content": prompt.format(metrics=json.dumps(metrics))},
     ]
+    
 
     response = client.chat.completions.create(
             model=os.getenv("DEPLOYMENT_NAME"),  # Use the deployment name instead of model name
@@ -277,9 +278,9 @@ def main():
     if st.button("Save Prompt"):
         try:
             # Corrected UPDATE query with WHERE clause
-            query = text("UPDATE prompt_valuation_reports SET [fla] = :prompt WHERE id = :id")
+            query = text("UPDATE prompt_valuation_reports SET [fla] = :fla WHERE id = :id")
             params = {
-                "prompt": user_prompt,
+                "fla": user_prompt,
                 "id": 1  # Make sure this matches the record you want to update
             }
             execute_query(query, params)

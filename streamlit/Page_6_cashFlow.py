@@ -225,6 +225,14 @@ def main():
 
 
     """
+    query = text("SELECT [cash_flow] FROM prompt_valuation_reports WHERE id = :id")
+    params = {"id": 1}
+    data = fetch_query(query, params)
+    
+    if data:
+        default_prompt= data[0]['cash_flow']
+    else:
+        pass
 
     # Allow user to customize prompt
     st.subheader("Customize Report Generation Prompt")
@@ -234,6 +242,38 @@ def main():
         height=400,
         key="prompt_input"
     )
+
+    if st.button("Save promt"):
+            #st.session_state.user_prompt = default_prompt
+        id = 1
+        try:
+            update_query = text("""
+                UPDATE prompt_valuation_reports
+                SET [cash_flow] = :cash_flow
+                WHERE id = :id
+            """)
+            params = {
+                "cash_flow": user_prompt,
+                "id": id
+            }
+            execute_query(update_query, params)
+            st.success("Data updated successfully!")
+        except Exception as e:
+            st.error(f"Update failed: {e}")
+        st.success("Prompt reset to default!")
+        st.rerun()
+
+        try:
+            query = text("SELECT [cash_flow] FROM prompt_valuation_reports WHERE id = :id")
+            params = {"id": 1}
+            data = fetch_query(query, params)
+            if data:
+                st.write("Executive Summary:")
+                st.write(data[0]["cash_flow"])
+            else:
+                st.warning("No report found.")
+        except Exception as e:
+            st.error(f"Error fetching data: {e}")
 
     # Add controls for report generation
     col1, col2 = st.columns(2)

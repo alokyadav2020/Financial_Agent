@@ -4,6 +4,9 @@ import PyPDF2
 import io
 from datetime import datetime
 import os
+from openai import AzureOpenAI 
+from dotenv import load_dotenv
+load_dotenv()
 
 # --- Configuration & Secrets ---
 # Ensure these secrets are set in your Streamlit Cloud environment or locally
@@ -16,14 +19,21 @@ except KeyError:
 
 # --- PDF Chatbot Class ---
 class PDFChatbot:
-    def __init__(self, api_key, model_name):
+    def __init__(self, api_key, model_name = os.getenv("DEPLOYMENT_NAME")):
         """Initialize the InferenceClient."""
         try:
-            self.client = InferenceClient(
-                provider="hf-inference", # Or specify your provider if different
-                model=model_name,
-                token=api_key
-            )
+            # self.client = InferenceClient(
+            #     provider="hf-inference", # Or specify your provider if different
+            #     model=model_name,
+            #     token=api_key
+            # )
+
+            self.client = AzureOpenAI(
+        azure_endpoint= os.getenv("ENDPOINT_URL"),
+        azure_deployment=os.getenv("DEPLOYMENT_NAME"),
+        api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+        api_version="2025-01-01-preview"
+    )
             self.model_name = model_name
         except Exception as e:
             st.error(f"Failed to initialize HuggingFace client: {e}")
@@ -78,12 +88,11 @@ class PDFChatbot:
 
         try:
             # Using chat_completion for conversational models
-            response_stream = self.client.chat_completion(
-                messages=messages,
-                max_tokens=500,
-                temperature=0.7,
-                stream=False # Set to False unless you want to handle streaming
-            )
+            response_stream = self.client.chat.completions.create(
+            model=os.getenv("DEPLOYMENT_NAME"),  # Use the deployment name instead of model name
+            messages=messages,
+            temperature=0.7
+        )
             # Accessing the response content correctly
             if response_stream.choices and len(response_stream.choices) > 0:
                  return response_stream.choices[0].message.content

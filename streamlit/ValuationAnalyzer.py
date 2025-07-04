@@ -185,12 +185,54 @@ def main():
     #         )
 
     # Generate report button
+    query = text("SELECT [valuation_analyzer] FROM prompt_valuation_reports WHERE id = :id")
+    params = {"id": 1}
+    data = fetch_query(query, params)
+    
+    if data:
+        prompt_templates= data[0]['valuation_analyzer']
+    else:
+        pass
     user_prompt = st.text_area(
                                                 "Modify the prompt template below:",
                                                 prompt_templates,
                                                 height=400,
                                                 key="prompt_input"
                                             )
+    
+    if st.button("Save promt"):
+            #st.session_state.user_prompt = default_prompt
+        id = 1
+        try:
+            update_query = text("""
+                UPDATE prompt_valuation_reports
+                SET [valuation_analyzer] = :valuation_analyzer
+                WHERE id = :id
+            """)
+            params = {
+                "valuation_analyzer": user_prompt,
+                "id": id
+            }
+            execute_query(update_query, params)
+            st.success("Data updated successfully!")
+        except Exception as e:
+            st.error(f"Update failed: {e}")
+        st.success("Prompt reset to default!")
+        st.rerun()
+
+        try:
+            query = text("SELECT [valuation_analyzer] FROM prompt_valuation_reports WHERE id = :id")
+            params = {"id": 1}
+            data = fetch_query(query, params)
+            if data:
+                st.write("valuation_analyzer:")
+                st.write(data[0]["valuation_analyzer"])
+            else:
+                st.warning("No report found.")
+        except Exception as e:
+            st.error(f"Error fetching data: {e}")
+    
+
     if st.button("Generate Report", key="generate_button"):
         with st.spinner("Generating valuation report..."):
             try:

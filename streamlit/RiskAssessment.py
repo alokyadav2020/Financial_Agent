@@ -7,18 +7,31 @@ from huggingface_hub import InferenceClient
 # Using a fixed datetime for demonstration as requested
 from datetime import datetime
 import os
+from src.db.sql_operation import execute_query, fetch_query
+from sqlalchemy import text
+from openai import AzureOpenAI 
+from dotenv import load_dotenv
+load_dotenv()
 
 class OperationalAssessment:
     def __init__(self):
         # Use os.getenv for sensitive information like API keys
         # Ensure you have hf_token and hf_model defined in your Streamlit secrets
         try:
-            self.client = InferenceClient(
-                provider="hf-inference",
-                model=os.getenv("hf_model"), # Added model here for clarity, though chat_completion needs it too
-                token=os.getenv("hf_token") # Use token argument
-            )
-            self.model_name = os.getenv("hf_model")
+            # self.client = InferenceClient(
+            #     provider="hf-inference",
+            #     model=os.getenv("hf_model"), # Added model here for clarity, though chat_completion needs it too
+            #     token=os.getenv("hf_token") # Use token argument
+            # )
+            self.client = AzureOpenAI(
+        azure_endpoint= os.getenv("ENDPOINT_URL"),
+        azure_deployment=os.getenv("DEPLOYMENT_NAME"),
+        api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+        api_version="2025-01-01-preview"
+    )
+
+
+            self.model_name = os.getenv("DEPLOYMENT_NAME")
         except KeyError as e:
             st.error(f"Missing Streamlit secret: {e}. Please add 'hf_token' and 'hf_model' to your secrets.")
             st.stop()
@@ -211,18 +224,27 @@ Ensure the language is concise, data-driven, professional, and focuses on action
 
         try:
             # Use the client initialized in __init__
-            response = self.client.chat_completion(
-                messages=[
+            # response = self.client.chat_completion(
+            #     messages=[
+            #         {"role": "system", "content": system_message},
+            #         {"role": "user", "content": user_message}
+            #     ],
+            #     max_tokens=1500,  # Increased max_tokens for potentially detailed analysis
+            #     temperature=0.6, # Slightly lower temp for more focused output
+            #     # model=self.model_name # Model defined during init
+            #     # Ensure you pass the model name if InferenceClient requires it per call,
+            #     # otherwise it uses the one from init. Check library documentation.
+            #     # If the client was initialized with the model, this might not be needed.
+            # )
+
+            response = self.client.chat.completions.create(
+            model=os.getenv("DEPLOYMENT_NAME"),  # Use the deployment name instead of model name
+            messages=[
                     {"role": "system", "content": system_message},
                     {"role": "user", "content": user_message}
                 ],
-                max_tokens=1500,  # Increased max_tokens for potentially detailed analysis
-                temperature=0.6, # Slightly lower temp for more focused output
-                # model=self.model_name # Model defined during init
-                # Ensure you pass the model name if InferenceClient requires it per call,
-                # otherwise it uses the one from init. Check library documentation.
-                # If the client was initialized with the model, this might not be needed.
-            )
+            temperature=0.7
+        )
             # Check if response structure is as expected
             if response.choices and response.choices[0].message:
                  return response.choices[0].message.content.strip() # .strip() to remove leading/trailing whitespace

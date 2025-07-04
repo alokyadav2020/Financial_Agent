@@ -607,6 +607,9 @@ import re
 import pandas as pd
 from huggingface_hub import InferenceClient
 import random
+from openai import AzureOpenAI 
+from dotenv import load_dotenv
+load_dotenv()
 
 # --- Helper Functions (from previous version, ensure they are here) ---
 def extract_text_from_pdf(file_bytes):
@@ -676,12 +679,18 @@ def initialize_llm_client(api_token_value):
     if api_token_value:
         try:
             # Use the specified InferenceClient instantiation
-            client = InferenceClient(
+            # client = InferenceClient(
                 
-                model=os.getenv("hf_model"), # Ensure HF_MODEL is defined
-                provider="hf-inference", # This might be for specific HF libraries, usually token is enough
-                token=api_token_value # Renamed from api_key for clarity with InferenceClient param
-            )
+            #     model=os.getenv("hf_model"), # Ensure HF_MODEL is defined
+            #     provider="hf-inference", # This might be for specific HF libraries, usually token is enough
+            #     token=api_token_value # Renamed from api_key for clarity with InferenceClient param
+            # )
+            client = AzureOpenAI(
+        azure_endpoint= os.getenv("ENDPOINT_URL"),
+        azure_deployment=os.getenv("DEPLOYMENT_NAME"),
+        api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+        api_version="2025-01-01-preview"
+    )
             # Test client (optional, can remove if it causes issues or delays)
             # client.get_model_status() # This is just an example, real method might vary or not exist
             return client
@@ -694,7 +703,11 @@ def generate_llm_response(client, prompt_text, max_tokens=300, temperature=0.7):
     if not client:
         return "LLM client not initialized. Please check your Hugging Face API token setup."
     try:
-        response = client.text_generation(prompt_text, max_new_tokens=max_tokens, temperature=temperature)
+        response = client.chat.completions.create(
+            model=os.getenv("DEPLOYMENT_NAME"),  # Use the deployment name instead of model name
+            messages=[prompt_text],
+            temperature=0.7
+        )
         return response
     except Exception as e:
         return f"LLM generation error: {str(e)}"

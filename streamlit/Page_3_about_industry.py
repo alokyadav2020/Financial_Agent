@@ -370,9 +370,9 @@ For each of the following sections, gather and synthesize information to provide
     if st.button("Save company Prompt"):
         try:
             # Corrected UPDATE query with WHERE clause
-            query = text("UPDATE prompt_valuation_reports SET [about_company_report_generation] = :prompt WHERE id = :id")
+            query = text("UPDATE prompt_valuation_reports SET [about_company_report_generation] = :about_company_report_generation WHERE id = :id")
             params = {
-                "prompt": editable_report_prompt_body,
+                "about_company_report_generation": editable_report_prompt_body,
                 "id": 1  # Make sure this matches the record you want to update
             }
             execute_query(query, params)

@@ -181,6 +181,14 @@ def main():
 
     <|eot_id|><|start_header_id|>assistant<|end_header_id|>
     """
+    query = text("SELECT [dcf] FROM prompt_valuation_reports WHERE id = :id")
+    params = {"id": 1}
+    data = fetch_query(query, params)
+    
+    if data:
+        default_prompt= data[0]['dcf']
+    else:
+        pass
 
     # Allow user to customize prompt
     st.subheader("Customize Report Generation Prompt")
@@ -190,6 +198,38 @@ def main():
         height=400,
         key="prompt_input"
     )
+    if st.button("Save promt"):
+            #st.session_state.user_prompt = default_prompt
+        id = 1
+        try:
+            update_query = text("""
+                UPDATE prompt_valuation_reports
+                SET [dcf] = :dcf
+                WHERE id = :id
+            """)
+            params = {
+                "dcf": user_prompt,
+                "id": id
+            }
+            execute_query(update_query, params)
+            st.success("Data updated successfully!")
+        except Exception as e:
+            st.error(f"Update failed: {e}")
+        st.success("Prompt reset to default!")
+        st.rerun()
+
+        try:
+            query = text("SELECT [dcf] FROM prompt_valuation_reports WHERE id = :id")
+            params = {"id": 1}
+            data = fetch_query(query, params)
+            if data:
+                st.write("Executive Summary:")
+                st.write(data[0]["dcf"])
+            else:
+                st.warning("No report found.")
+        except Exception as e:
+            st.error(f"Error fetching data: {e}")
+
 
     # Generate report button
     if st.button("Generate Report", key="generate_button"):
