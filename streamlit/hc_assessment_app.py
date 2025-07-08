@@ -175,7 +175,7 @@ def main():
         try:
             update_query = text(f"""
                 UPDATE prompt_valuation_reports
-                SET [{HCA_Section_1}] = :HCA_Section_1
+                SET [{HCA_Section_1}] = :{HCA_Section_1}
                 WHERE id = :id
             """)
             params = {
