@@ -87,10 +87,10 @@ def main():
 
     # Phase selection
     phases = {
-        "Phase 1": "Organizational Structure and Workforce Analysis",
-        "Phase 2": "Compensation, Benefits, and Talent Development",
-        "Phase 3": "Human Capital Risks and Strategic Alignment",
-        "Phase 4": "Synthesis and Output"
+        "Section 1": "Organizational Structure and Workforce Analysis",
+        "Section 2": "Compensation, Benefits, and Talent Development",
+        "Section 3": "Human Capital Risks and Strategic Alignment",
+        "Section 4": "Synthesis and Output"
     }
 
     selected_phase = st.selectbox(
@@ -101,13 +101,13 @@ def main():
 
     # Task selection based on phase
     tasks = {
-        "Phase 1": ["Task 1: Analyze Organizational Structure", 
+        "Section 1": ["Task 1: Analyze Organizational Structure", 
                     "Task 2: Analyze Employee Metrics"],
-        "Phase 2": ["Task 3: Analyze Compensation and Benefits", 
+        "Section 2": ["Task 3: Analyze Compensation and Benefits", 
                     "Task 4: Evaluate Talent Development and Training"],
-        "Phase 3": ["Task 5: Identify Human Capital Risks", 
+        "Section 3": ["Task 5: Identify Human Capital Risks", 
                     "Task 6: Assess Strategic Alignment"],
-        "Phase 4": ["Task 7: Synthesize Findings", 
+        "Section 4": ["Task 7: Synthesize Findings", 
                     "Task 8: Develop Strategic Moves", 
                     "Task 9: Create Assessment Report"]
     }
@@ -116,6 +116,8 @@ def main():
         "Select Task",
         tasks[selected_phase]
     )
+
+    print(f"Selected Phase: {selected_phase}, Task: {selected_task}")
 
     # Default prompt template
     default_prompt = """
@@ -129,6 +131,25 @@ def main():
     
     Please provide detailed insights and actionable recommendations.
     """
+    HCA_Section_1 = ""
+    
+    if selected_phase == "Section 1":
+        HCA_Section_1 = "HCA_Section_1"
+    elif selected_phase == "Section 2":
+        HCA_Section_1 = "HCA_Section_2"
+    elif selected_phase == "Section 3":
+        HCA_Section_1 = "HCA_Section_3"
+    elif selected_phase == "Section 4":
+        HCA_Section_1 = "HCA_Section_4"
+
+    query = text(f"SELECT [{HCA_Section_1}] FROM prompt_valuation_reports WHERE id = :id")
+    params = {"id": 1}
+    data = fetch_query(query, params)
+    
+    if data:
+        default_prompt= data[0][f'{HCA_Section_1}']
+    else:
+        pass
 
     # Allow user to customize prompt
     st.subheader("Customize Analysis Prompt")
@@ -138,6 +159,52 @@ def main():
         height=300,
         key="prompt_input"
     )
+    HCA_Section_1 = ""
+    if st.button("Save promt"):
+        if selected_phase == "Section 1":
+            HCA_Section_1 = "HCA_Section_1"
+        elif selected_phase == "Section 2":
+            HCA_Section_1 = "HCA_Section_2"
+        elif selected_phase == "Section 3":
+            HCA_Section_1 = "HCA_Section_3"
+        elif selected_phase == "Section 4":
+            HCA_Section_1 = "HCA_Section_4"
+
+            #st.session_state.user_prompt = default_prompt
+        id = 1
+        try:
+            update_query = text(f"""
+                UPDATE prompt_valuation_reports
+                SET [{HCA_Section_1}] = :HCA_Section_1
+                WHERE id = :id
+            """)
+            params = {
+                f"{HCA_Section_1}": user_prompt,
+                "id": id
+            }
+            execute_query(update_query, params)
+            st.success("Data updated successfully!")
+        except Exception as e:
+            st.error(f"Update failed: {e}")
+        st.success("Prompt reset to default!")
+        st.rerun()
+
+        try:
+            query = text(f"SELECT [{HCA_Section_1}] FROM prompt_valuation_reports WHERE id = :id")
+            params = {"id": 1}
+            data = fetch_query(query, params)
+            if data:
+                st.write(f"{HCA_Section_1}:")
+                st.write(data[0][f"{HCA_Section_1}"])
+            else:
+                st.warning("No report found.")
+        except Exception as e:
+            st.error(f"Error fetching data: {e}")
+
+
+    st.markdown("----")
+
+
 
     # Analysis generation
     col1, col2 = st.columns([2, 1])
@@ -156,7 +223,7 @@ def main():
                 # Add to history
                 st.session_state.analysis_history.append({
                     'timestamp': timestamp,
-                    'phase': selected_phase,
+                    'Section': selected_phase,
                     'task': selected_task,
                     'prompt': user_prompt,
                     'analysis': analysis
@@ -176,7 +243,7 @@ def main():
         # Prepare analysis history for download
         analysis_text = "\n\n---\n\n".join([
             f"Timestamp: {entry['timestamp']}\n"
-            f"Phase: {entry['phase']}\n"
+            f"Section: {entry['phase']}\n"
             f"Task: {entry['task']}\n"
             f"Analysis:\n{entry['analysis']}"
             for entry in st.session_state.analysis_history
@@ -195,7 +262,7 @@ def main():
         for i, entry in enumerate(st.session_state.analysis_history):
             with st.expander(f"Analysis {i+1} - {entry['phase']} - {entry['task']}"):
                 st.markdown(f"**Timestamp:** {entry['timestamp']}")
-                st.markdown(f"**Phase:** {entry['phase']}")
+                st.markdown(f"**Section:** {entry['phase']}")
                 st.markdown(f"**Task:** {entry['task']}")
                 st.markdown("**Analysis:**")
                 st.markdown(entry['analysis'])

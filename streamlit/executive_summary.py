@@ -47,6 +47,7 @@ def get_default_financial_data():
             "ev_ebitda_multiple": 6.5,
             "valuation_range": {"low": 10000000, "high": 14000000},
         },
+        # website https://pages.stern.nyu.edu/~adamodar/
         "industry_benchmarks": {
             "avg_gross_margin": 0.35,
             "avg_operating_margin": 0.18,
