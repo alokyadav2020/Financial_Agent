@@ -25,14 +25,14 @@ class OperationalAssessment:
 
 
         self.phases = {
-            "Phase 1": {
+            "Section 1": {
                 "name": "Business Process Analysis",
                 "tasks": {
                     "Task 1": "Identify and Document Key Operational Workflows",
                     "Task 2": "Create Process Flow Diagrams"
                 }
             },
-            "Phase 2": {
+            "Section 2": {
                 "name": "Supply Chain Analysis",
                 "tasks": {
                     "Task 3": "Analyze Supply Chain Structure",
@@ -40,14 +40,14 @@ class OperationalAssessment:
                     "Task 5": "Assess Supply Chain Risks and Vulnerabilities"
                 }
             },
-            "Phase 3": {
+            "Section 3": {
                 "name": "Performance Assessment and Benchmarking",
                 "tasks": {
                     "Task 6": "Identify Key Operational Performance Indicators (KPIs)",
                     "Task 7": "Benchmark Performance"
                 }
             },
-            "Phase 4": {
+            "Section 4": {
                 "name": "Synthesis and Output",
                 "tasks": {
                     "Task 8": "Synthesize Findings and Identify Strategic Operational Moves",
@@ -61,7 +61,7 @@ class OperationalAssessment:
         formatted_prompt = f"""
         As an MBB consultant specializing in Operational Assessment, analyze the following:
         
-        Phase: {phase}
+        Section: {phase}
         Task: {task}
         Industry Context: {industry_context}
         
@@ -151,6 +151,25 @@ def main():
     Please provide detailed insights and actionable recommendations
     focusing on operational excellence and efficiency improvements.
     """
+    OAT_Section_1 = ""
+    
+    if selected_phase == "Section 1":
+        OAT_Section_1 = "OAT_Section_1"
+    elif selected_phase == "Section 2":
+        OAT_Section_1 = "OAT_Section_2"
+    elif selected_phase == "Section 3":
+        OAT_Section_1 = "OAT_Section_3"
+    elif selected_phase == "Section 4":
+        OAT_Section_1 = "OAT_Section_4"
+
+    query = text(f"SELECT [{OAT_Section_1}] FROM prompt_valuation_reports WHERE id = :id")
+    params = {"id": 1}
+    data = fetch_query(query, params)
+    
+    if data:
+        default_prompt= data[0][f'{OAT_Section_1}']
+    else:
+        pass
 
     # Prompt customization
     st.subheader("Customize Analysis Prompt")
@@ -160,6 +179,55 @@ def main():
         height=300,
         key="prompt_input"
     )
+
+    OAT_Section_1 = ""
+    if st.button("Save promt"):
+        if selected_phase == "Section 1":
+            OAT_Section_1 = "OAT_Section_1"
+        elif selected_phase == "Section 2":
+            OAT_Section_1 = "OAT_Section_2"
+        elif selected_phase == "Section 3":
+            OAT_Section_1 = "OAT_Section_3"
+        elif selected_phase == "Section 4":
+            OAT_Section_1 = "OAT_Section_4"
+
+            #st.session_state.user_prompt = default_prompt
+        id = 1
+        try:
+            update_query = text(f"""
+                UPDATE prompt_valuation_reports
+                SET [{OAT_Section_1}] = :{OAT_Section_1}
+                WHERE id = :id
+            """)
+            params = {
+                f"{OAT_Section_1}": user_prompt,
+                "id": id
+            }
+            execute_query(update_query, params)
+            st.success("Data updated successfully!")
+        except Exception as e:
+            st.error(f"Update failed: {e}")
+        st.success("Prompt reset to default!")
+        st.rerun()
+
+        try:
+            query = text(f"SELECT [{OAT_Section_1}] FROM prompt_valuation_reports WHERE id = :id")
+            params = {"id": 1}
+            data = fetch_query(query, params)
+            if data:
+                st.write(f"{OAT_Section_1}:")
+                st.write(data[0][f"{OAT_Section_1}"])
+            else:
+                st.warning("No report found.")
+        except Exception as e:
+            st.error(f"Error fetching data: {e}")
+
+
+    st.markdown("----")
+
+
+
+
 
     # Analysis generation
     col1, col2 = st.columns([2, 1])
@@ -177,7 +245,7 @@ def main():
                 # Save to history
                 st.session_state.analysis_history.append({
                     'timestamp': timestamp,
-                    'phase': selected_phase,
+                    'Section': selected_phase,
                     'task': selected_task,
                     'industry': industry_context,
                     'prompt': user_prompt,
@@ -197,7 +265,7 @@ def main():
         # Prepare analysis history for download
         analysis_text = "\n\n---\n\n".join([
             f"Timestamp: {entry['timestamp']}\n"
-            f"Phase: {entry['phase']}\n"
+            f"Section: {entry['phase']}\n"
             f"Task: {entry['task']}\n"
             f"Industry: {entry['industry']}\n"
             f"Analysis:\n{entry['analysis']}"
@@ -217,7 +285,7 @@ def main():
         for i, entry in enumerate(st.session_state.analysis_history):
             with st.expander(f"Analysis {i+1} - {entry['phase']} - {entry['task']}"):
                 st.markdown(f"**Timestamp:** {entry['timestamp']}")
-                st.markdown(f"**Phase:** {entry['phase']}")
+                st.markdown(f"**Section:** {entry['phase']}")
                 st.markdown(f"**Task:** {entry['task']}")
                 st.markdown(f"**Industry:** {entry['industry']}")
                 st.markdown("**Analysis:**")
