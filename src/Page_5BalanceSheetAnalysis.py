@@ -3,6 +3,12 @@ import random
 from datetime import datetime
 from huggingface_hub import InferenceClient
 import json
+from src.db.sql_operation import execute_query, fetch_query
+from sqlalchemy import text
+from openai import AzureOpenAI 
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
 class FinancialReportGenerator:
     def generate_dummy_financial_data(self, years):
@@ -53,18 +59,24 @@ class FinancialReportGenerator:
 
 def generate_report(prompt, data):
     """Generate financial report using HuggingFace model."""
-    client = InferenceClient(
-        provider="hf-inference",
-        api_key=st.secrets["hf_token"],
-    )
+    # client = InferenceClient(
+    #     provider="hf-inference",
+    #     api_key=st.secrets["hf_token"],
+    # )
+    client = AzureOpenAI(
+            azure_endpoint= os.getenv("ENDPOINT_URL"),
+            azure_deployment=os.getenv("DEPLOYMENT_NAME"),
+            api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+            api_version="2025-01-01-preview"
+        )
 
     messages = [
         {"role": "system", "content": "You are a financial report expert."},
-        {"role": "user", "content": prompt.format(json=json.dumps(data, indent=2))},
+        {"role": "user", "content": prompt + f"Using data \n\n {data}"},
     ]
 
-    response = client.chat_completion(
-        model=st.secrets["hf_model"],
+    response = client.chat.completions.create(
+        model=os.getenv("DEPLOYMENT_NAME"),
         messages=messages,
         max_tokens=8000,
         temperature=0.1,
@@ -265,8 +277,22 @@ Additional Explanation of Calculations (MBB Style): Provide detailed explanation
                         "financial_data": financial_data,
                         "ratios": financial_ratios
                     }
+    
+    prompt_template = ""
+    
+    query = text("SELECT [balance_sheet] FROM prompt_valuation_reports WHERE id = :id")
+    params = {"id": 1}
+    data = fetch_query(query, params)
+    
+    if data:
+        default_prompt= data[0]['balance_sheet']
+        prompt_template = default_prompt
+    else:
+       prompt_template = default_prompt
+    
 
-    report = generate_report(default_prompt + "Here is the balance sheet for the years 2023, 2022, and 2021: in {json}", report_data)
+
+    report = generate_report(prompt_template + "Here is the balance sheet for the years 2023, 2022, and 2021: in {json}", report_data)
 
 
     return report

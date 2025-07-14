@@ -1,6 +1,13 @@
 import streamlit as st
 from huggingface_hub import InferenceClient
 import json
+from src.db.sql_operation import execute_query, fetch_query
+from sqlalchemy import text
+from openai import AzureOpenAI 
+from dotenv import load_dotenv
+import os
+load_dotenv()
+
 
 
 # Function to calculate margins for P&L
@@ -23,18 +30,24 @@ def calculate_margins_for_pnl(financial_data):
 # Function to generate the P&L report
 def generate_report(prompt, metrics):
     """Generate financial report using HuggingFace model."""
-    client = InferenceClient(
-        provider="hf-inference",
-        api_key=st.secrets["hf_token"],
-    )
+    # client = InferenceClient(
+    #     provider="hf-inference",
+    #     api_key=st.secrets["hf_token"],
+    # )
+    client = AzureOpenAI(
+            azure_endpoint= os.getenv("ENDPOINT_URL"),
+            azure_deployment=os.getenv("DEPLOYMENT_NAME"),
+            api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+            api_version="2025-01-01-preview"
+        )
 
     messages = [
         {"role": "system", "content": "You are a financial report expert."},
-        {"role": "user", "content": prompt.format(metrics=json.dumps(metrics))},
+        {"role": "user", "content": prompt + f"Uing metrics \n\n {metrics}"},
     ]
 
-    response = client.chat_completion(
-        model=st.secrets["hf_model"],
+    response = client.chat.completions.create(
+        model=os.getenv("DEPLOYMENT_NAME"),
         messages=messages,
         max_tokens=8000,
         temperature=0.1,
@@ -233,8 +246,20 @@ def pnl_reports():
     }
 
     # Calculate margins
+    query = text("SELECT [fla] FROM prompt_valuation_reports WHERE id = :id")
+    params = {"id": 1}
+    data = fetch_query(query, params)
+    research_agent_prompt = ""
+    
+    if data:
+        retrieved_scraping_prompt = data[0]['fla']
+        research_agent_prompt = retrieved_scraping_prompt
+        
+        
+    else:
+        research_agent_prompt=DEFAULT_PROMPT
     pnl_data = calculate_margins_for_pnl(financial_data)
-    report = generate_report("Here is the Profit & Loss data for the years 2023, 2022, and 2021:{metrics}" + DEFAULT_PROMPT, pnl_data)
+    report = generate_report("Here is the Profit & Loss data for the years 2023, 2022, and 2021:{metrics}" + research_agent_prompt, pnl_data)
     return report
 
 if __name__ == "__main__":

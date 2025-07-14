@@ -3,6 +3,12 @@ import random
 from datetime import datetime
 from huggingface_hub import InferenceClient
 import json
+from src.db.sql_operation import execute_query, fetch_query
+from sqlalchemy import text
+from openai import AzureOpenAI 
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
 class CashFlowAnalyzer:
     def generate_dummy_cash_flow_data(self, years):
@@ -69,18 +75,24 @@ class CashFlowAnalyzer:
 
 def generate_report(prompt, data):
     """Generate financial report using HuggingFace model."""
-    client = InferenceClient(
-        provider="hf-inference",
-        api_key=st.secrets["hf_token"],
-    )
+    # client = InferenceClient(
+    #     provider="hf-inference",
+    #     api_key=st.secrets["hf_token"],
+    # )
+    client = AzureOpenAI(
+            azure_endpoint= os.getenv("ENDPOINT_URL"),
+            azure_deployment=os.getenv("DEPLOYMENT_NAME"),
+            api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+            api_version="2025-01-01-preview"
+        )
 
     messages = [
         {"role": "system", "content": "You are a financial report expert."},
-        {"role": "user", "content": prompt.format(json=json.dumps(data, indent=2))},
+        {"role": "user", "content": prompt + f"Using data \n\n {data}"},
     ]
 
-    response = client.chat_completion(
-        model=st.secrets["hf_model"],
+    response = client.chat.completions.create(
+        model=os.getenv("DEPLOYMENT_NAME"),
         messages=messages,
         max_tokens=8000,
         temperature=0.1,
@@ -192,9 +204,21 @@ def cashflow():
                         "cash_flow_data": cash_flow_data,
                         "metrics": cash_flow_metrics
                     }
+    
+    prompt__ = ""
+    
+    query = text("SELECT [cash_flow] FROM prompt_valuation_reports WHERE id = :id")
+    params = {"id": 1}
+    data = fetch_query(query, params)
+    
+    if data:
+        default_prompt= data[0]['cash_flow']
+        prompt__ = default_prompt
+    else:
+        prompt__ = default_prompt
 
                 # Generate report
-    report = generate_report(default_prompt + " Here is the cash flow data for the years 2023, 2022, and 2021: in {json}", report_data)    
+    report = generate_report(prompt__ + " Here is the cash flow data for the years 2023, 2022, and 2021: in {json}", report_data)    
     return report
 
 if __name__ == "__main__":

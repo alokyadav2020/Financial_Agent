@@ -46,7 +46,7 @@ logout_page = st.Page(logout, title="Log out", icon=":material/logout:")
 full_reports = st.Page(os.path.join("streamlit","Full_reports.py"), title="Full Reports", icon=":material/analytics:")
 ein_check = st.Page(os.path.join("streamlit","ein_check.py"), title="EIN Check",icon=":material/person_add:" )
 
-beyond_FR_reports = st.Page(os.path.join("streamlit","beyond_financial_report.py"), title="Full Reports", icon=":material/analytics:")
+beyond_FR_reports = st.Page(os.path.join("streamlit","beyond_financial_report.py"), title="Beyond FR", icon=":material/analytics:")
 
 
 admin_1 = st.Page(os.path.join("streamlit","executive_summary.py"),title="Executive Summary",icon=":material/security:",default=(role == "Admin"),)
