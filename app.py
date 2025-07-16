@@ -47,6 +47,7 @@ full_reports = st.Page(os.path.join("streamlit","Full_reports.py"), title="Full 
 ein_check = st.Page(os.path.join("streamlit","ein_check.py"), title="EIN Check",icon=":material/person_add:" )
 
 beyond_FR_reports = st.Page(os.path.join("streamlit","beyond_financial_report.py"), title="Beyond FR", icon=":material/analytics:")
+data_extract = st.Page(os.path.join("streamlit","dataextract.py"), title="Financial Data extraction", icon=":material/analytics:")
 
 
 admin_1 = st.Page(os.path.join("streamlit","executive_summary.py"),title="Executive Summary",icon=":material/security:",default=(role == "Admin"),)
@@ -66,7 +67,7 @@ admin_14 = st.Page(os.path.join("streamlit","RiskAssessment.py"), title="Risk As
 admin_15 = st.Page(os.path.join("streamlit","VirtualDataRoomAgent.py"), title="Virtual Data Room Agent",icon=":material/person_add:" )
 
 
-account_pages = [logout_page, full_reports,ein_check,beyond_FR_reports]
+account_pages = [logout_page, full_reports,ein_check,beyond_FR_reports,data_extract]
 
 
 admin_pages = [admin_1, admin_2,admin_3,admin_4,admin_5,admin_6,admin_7,admin_8,admin_9,admin_11,admin_12,admin_13,admin_14,admin_10,admin_15]

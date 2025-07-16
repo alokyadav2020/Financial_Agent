@@ -15,5 +15,6 @@ Pillow
 python-dotenv
 pymssql
 sqlalchemy
+pypdf
 
 -e .
