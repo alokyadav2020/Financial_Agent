@@ -283,38 +283,48 @@ def main():
                     """
                 )
 
-                # CompanyData_team = Team(
-                #     name="Company Data Extraction Team",
-                #     mode="coordinate",
-                #     model=model,
-                #     members=[CompanyInfoAgent, FinancialMetricsAgent, BalanceSheetAgent, KPIsAgent,CashFlowAgent ,ValuationAgent, IndustryBenchmarksAgent, RiskFactorsAgent],
-                #     response_model=CompanyData,
-                #     markdown=True,
-                #     show_members_responses=True,
-                # )
-                # CompanyData_ = CompanyData_team.run(prompt)
-                # st.json(CompanyData_.content.model_dump())
-                r1 = CompanyInfoAgent.run(prompt)
-                r2 = FinancialMetricsAgent.run(prompt)
-                # r3 = FinancialMetricsAgent.run(prompt)
-                r4 = BalanceSheetAgent.run(prompt)
+                CompanyData_team = Team(
+                    name="Company Data Extraction Team",
+                    mode="coordinate",
+                    model=model,
+                    members=[CompanyInfoAgent, FinancialMetricsAgent, BalanceSheetAgent, KPIsAgent,CashFlowAgent ,ValuationAgent, IndustryBenchmarksAgent, RiskFactorsAgent],
+                    response_model=CompanyData,
+                    markdown=True,
+                    show_members_responses=True,
+                )
+                CompanyData_ = CompanyData_team.run(prompt)
+                st.json(CompanyData_.content.model_dump_json(indent=2), expanded=True)
+                # r1 = CompanyInfoAgent.run(prompt)
+                # r2 = FinancialMetricsAgent.run(prompt)
+                # # r3 = FinancialMetricsAgent.run(prompt)
+                # r4 = BalanceSheetAgent.run(prompt)
                 
-                r5 = KPIsAgent.run(prompt)
-                r6 = CashFlowAgent.run(prompt)
-                r7 = ValuationAgent.run(prompt)
-                r8 = IndustryBenchmarksAgent.run(prompt)
-                r9 = RiskFactorsAgent.run(prompt)
+                # r5 = KPIsAgent.run(prompt)
+                # r6 = CashFlowAgent.run(prompt)
+                # r7 = ValuationAgent.run(prompt)
+                # r8 = IndustryBenchmarksAgent.run(prompt)
+                # r9 = RiskFactorsAgent.run(prompt)
 
-                st.json({
-                    "company_info": r1.content.model_dump(),
-                    "financial_metrics": r2.content.model_dump(),
-                    "balance_sheet": r4.content.model_dump(),
-                    "kpis": r5.content.model_dump(),
-                    "cash_flow": r6.content.model_dump(),
-                    "valuation": r7.content.model_dump(),
-                    "industry_benchmarks": r8.content.model_dump(),
-                    "risk_factors": r9.content.model_dump()
-                }, expanded=True)   
+                # st.json(r1.content.model_dump(), expanded=True)
+                # st.json(r2.content.model_dump(), expanded=True)
+                # st.json(r4.content.model_dump(), expanded=True)
+                # st.json(r5.content.model_dump(), expanded=True)
+                # st.json(r6.content.model_dump(), expanded=True)
+                # st.json(r7.content.model_dump(), expanded=True)
+                # st.json(r8.content.model_dump(), expanded=True)
+                # st.json(r9.content.model_dump(), expanded=True)
+
+
+                # st.json({
+                #     "company_info": r1.content.model_dump(),
+                #     "financial_metrics": r2.content.model_dump(),
+                #     "balance_sheet": r4.content.model_dump(),
+                #     "kpis": r5.content.model_dump(),
+                #     "cash_flow": r6.content.model_dump(),
+                #     "valuation": r7.content.model_dump(),
+                #     "industry_benchmarks": r8.content.model_dump(),
+                #     "risk_factors": r9.content.model_dump()
+                # }, expanded=True)   
 
                 
             except Exception as e:
