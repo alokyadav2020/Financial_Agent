@@ -131,7 +131,7 @@ def main():
                     azure_endpoint= os.getenv("ENDPOINT_URL"),
                     azure_deployment=os.getenv("DEPLOYMENT_NAME"),
                     api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-                    api_version=os.getenv("api_version", "2025-04-14"),  # Use the latest version
+                    api_version=os.getenv("api_version", "2025-04-01-preview"),  # Use the latest version
                     max_tokens=8192,  # Increased from 4096
                     temperature=0.1,
                 )
@@ -283,37 +283,37 @@ def main():
                     """
                 )
 
-                CompanyData_team = Team(
-                    name="Company Data Extraction Team",
-                    mode="coordinate",
-                    model=model,
-                    members=[CompanyInfoAgent, FinancialMetricsAgent, BalanceSheetAgent, KPIsAgent,CashFlowAgent ,ValuationAgent, IndustryBenchmarksAgent, RiskFactorsAgent],
-                    response_model=CompanyData,
-                    markdown=True,
-                    show_members_responses=True,
-                )
-                CompanyData_ = CompanyData_team.run(prompt)
-                st.json(CompanyData_.content.model_dump_json(indent=2), expanded=True)
+                # CompanyData_team = Team(
+                #     name="Company Data Extraction Team",
+                #     mode="coordinate",
+                #     model=model,
+                #     members=[CompanyInfoAgent, FinancialMetricsAgent, BalanceSheetAgent, KPIsAgent,CashFlowAgent ,ValuationAgent, IndustryBenchmarksAgent, RiskFactorsAgent],
+                #     response_model=CompanyData,
+                #     markdown=True,
+                #     show_members_responses=True,
+                # )
+                # CompanyData_ = CompanyData_team.run(prompt)
+                # st.json(CompanyData_.content.model_dump_json(indent=2), expanded=True)
 
-                # r1 = CompanyInfoAgent.run(prompt)
-                # r2 = FinancialMetricsAgent.run(prompt)
-                # # r3 = FinancialMetricsAgent.run(prompt)
-                # r4 = BalanceSheetAgent.run(prompt)
+                r1 = CompanyInfoAgent.run(prompt)
+                r2 = FinancialMetricsAgent.run(prompt)
+                # r3 = FinancialMetricsAgent.run(prompt)
+                r4 = BalanceSheetAgent.run(prompt)
                 
-                # r5 = KPIsAgent.run(prompt)
-                # r6 = CashFlowAgent.run(prompt)
-                # r7 = ValuationAgent.run(prompt)
-                # r8 = IndustryBenchmarksAgent.run(prompt)
-                # r9 = RiskFactorsAgent.run(prompt)
+                r5 = KPIsAgent.run(prompt)
+                r6 = CashFlowAgent.run(prompt)
+                r7 = ValuationAgent.run(prompt)
+                r8 = IndustryBenchmarksAgent.run(prompt)
+                r9 = RiskFactorsAgent.run(prompt)
 
-                # st.json(r1.content.model_dump(), expanded=True)
-                # st.json(r2.content.model_dump(), expanded=True)
-                # st.json(r4.content.model_dump(), expanded=True)
-                # st.json(r5.content.model_dump(), expanded=True)
-                # st.json(r6.content.model_dump(), expanded=True)
-                # st.json(r7.content.model_dump(), expanded=True)
-                # st.json(r8.content.model_dump(), expanded=True)
-                # st.json(r9.content.model_dump(), expanded=True)
+                st.json(r1.content.model_dump_json(), expanded=True)
+                st.json(r2.content.model_dump_json(), expanded=True)
+                st.json(r4.content.model_dump_json(), expanded=True)
+                st.json(r5.content.model_dump_json(), expanded=True)
+                st.json(r6.content.model_dump_json(), expanded=True)
+                st.json(r7.content.model_dump_json(), expanded=True)
+                st.json(r8.content.model_dump_json(), expanded=True)
+                st.json(r9.content.model_dump_json(), expanded=True)
 
 
                 # st.json({
