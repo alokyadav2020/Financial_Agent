@@ -131,7 +131,7 @@ def main():
                     azure_endpoint= os.getenv("ENDPOINT_URL"),
                     azure_deployment=os.getenv("DEPLOYMENT_NAME"),
                     api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-                    api_version="2025-01-01-preview",
+                    api_version=os.getenv("api_version", "2025-04-14"),  # Use the latest version
                     max_tokens=8192,  # Increased from 4096
                     temperature=0.1,
                 )
@@ -294,6 +294,7 @@ def main():
                 )
                 CompanyData_ = CompanyData_team.run(prompt)
                 st.json(CompanyData_.content.model_dump_json(indent=2), expanded=True)
+
                 # r1 = CompanyInfoAgent.run(prompt)
                 # r2 = FinancialMetricsAgent.run(prompt)
                 # # r3 = FinancialMetricsAgent.run(prompt)
