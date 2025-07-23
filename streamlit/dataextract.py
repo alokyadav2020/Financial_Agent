@@ -169,7 +169,7 @@ def create_model():
 def company_info_extractor(prompt):
     model_instance = create_model()
    
-    agent = Agent(
+    agent1 = Agent(
         model=model_instance,
         description="Extract and analyze company profile information",
         response_model=CompanyInfo,
@@ -187,14 +187,14 @@ def company_info_extractor(prompt):
         Ensure information is sourced from the document where possible; use reasonable defaults if missing.
         """
     )
-    r1= agent.run(prompt)
+    r1= agent1.run(prompt)
     return r1.content.model_dump_json(indent=2)
 
 
 def financial_metrics_extractor(prompt):
     
     model = create_model()
-    agent = Agent(
+    agent2 = Agent(
         model=model,
         description="Extract yearly financial metrics from documents",
         response_model=FinancialMetrics,
@@ -211,14 +211,14 @@ def financial_metrics_extractor(prompt):
         Clean the noisy OCR text to find accurate numbers. If data for a year is missing, omit that entry. Ensure all information is sourced from the document.
         """
     )
-    r2= agent.run(prompt)
+    r2= agent2.run(prompt)
     return r2.content.model_dump_json(indent=2)
 
     
 
 def balance_sheet_extractor(prompt):
     model = create_model()
-    agent = Agent(
+    agent3 = Agent(
         model=model,
         description="Extract balance sheet data from documents",
         response_model=BalanceSheet,
@@ -241,13 +241,13 @@ def balance_sheet_extractor(prompt):
         Clean the noisy OCR text to find accurate numbers. If data for a year is missing, omit that entry. Ensure all information is sourced from the document.
         """
     )
-    r3= agent.run(prompt).content.model_dump_json(indent=2)
+    r3= agent3.run(prompt).content.model_dump_json(indent=2)
     return r3
 
 
 def kpis_extractor(prompt):
     model_ = create_model()
-    agent = Agent(
+    agent4 = Agent(
         model=model_,
         description="Calculate and extract KPIs from documents",
         response_model=KPIs,
@@ -266,14 +266,14 @@ def kpis_extractor(prompt):
         Base calculations on document data.
         """
     )
-    r5= agent.run(prompt).content.model_dump_json(indent=2)
+    r4= agent4.run(prompt).content.model_dump_json(indent=2)
     # r5 = agent.run(prompt)
-    return r5
+    return r4
 
 def cash_flow_extractor(prompt):
     model = create_model()
 
-    agent = Agent(
+    agent5 = Agent(
         model=model,
         description="Extract cash flow data from documents",
         response_model=CashFlowData,
@@ -295,13 +295,13 @@ def cash_flow_extractor(prompt):
         Ensure all information is directly sourced from official documents. If a value is not found, set to 0.0.
         """
     )
-    r6= agent.run(prompt).content.model_dump_json(indent=2)
+    r5= agent5.run(prompt).content.model_dump_json(indent=2)
     # r6 = agent.run(prompt)
-    return r6
+    return r5
 
 def valuation_extractor(prompt):
     model = create_model()
-    agent = Agent(
+    agent6 = Agent(
         model=model,
         description="Estimate valuation metrics based on financials",
         response_model=Valuation,
@@ -315,12 +315,12 @@ def valuation_extractor(prompt):
         Use numbers in millions. Reasonable assumptions for missing data.
         """
     )
-    r7= agent.run(prompt).content.model_dump_json(indent=2)
-    return r7
+    r6= agent6.run(prompt).content.model_dump_json(indent=2)
+    return r6
 
 def industry_benchmarks_extractor(prompt):
     model_ = create_model()
-    agent = Agent(
+    agent7 = Agent(
         model=model_,
         description="Provide industry benchmark averages",
         response_model=IndustryBenchmarks,
@@ -335,12 +335,12 @@ def industry_benchmarks_extractor(prompt):
         Use standard data from knowledge (e.g., gross margin ~20%, etc.).
         """
     )
-    r8= agent.run(prompt).content.model_dump_json(indent=2)
-    return r8
+    r7= agent7.run(prompt).content.model_dump_json(indent=2)
+    return r7
 
 def risk_factors_extractor(prompt):
     model = create_model()
-    agent = Agent(
+    agent8 = Agent(
         model=model,
         description="Analyze risk factors from documents",
         response_model=RiskFactors,
@@ -356,8 +356,8 @@ def risk_factors_extractor(prompt):
         Base on document content.
         """
     )
-    r9= agent.run(prompt).content.model_dump_json(indent=2)
-    return r9
+    r8= agent8.run(prompt).content.model_dump_json(indent=2)
+    return r8
 
 
 
@@ -554,21 +554,45 @@ def main():
                 
                 st.subheader("Extracted Financial Information")
                 st.write("Company Information:")
-                st.json(company_info_extractor(prompt), expanded=True)
+                try:
+                    st.json(company_info_extractor(prompt), expanded=True)
+                except Exception as e:
+                    st.error(f"Error extracting company info: {str(e)}")
                 st.write("Financial Metrics:")
-                st.json(financial_metrics_extractor(prompt), expanded=True)
+                try:
+                    st.json(financial_metrics_extractor(prompt), expanded=True)
+                except Exception as e:
+                    st.error(f"Error extracting financial metrics: {str(e)}")
                 st.write("Balance Sheet:")
-                st.json(balance_sheet_extractor(prompt=prompt), expanded=True)
+                try:
+                    st.json(balance_sheet_extractor(prompt=prompt), expanded=True)
+                except Exception as e:
+                    st.error(f"Error extracting balance sheet: {str(e)}")
                 st.write("Key Performance Indicators:")
-                st.json(kpis_extractor(prompt=prompt), expanded=True)
+                try:
+                    st.json(kpis_extractor(prompt=prompt), expanded=True)
+                except Exception as e:
+                    st.error(f"Error extracting key performance indicators: {str(e)}")
                 st.write("Cash Flow:")
-                st.json(cash_flow_extractor(prompt=prompt), expanded=True)
+                try:
+                    st.json(cash_flow_extractor(prompt=prompt), expanded=True)
+                except Exception as e:
+                    st.error(f"Error extracting cash flow: {str(e)}")
                 st.write("Valuation:")
-                st.json(valuation_extractor(prompt=prompt), expanded=True)
+                try:
+                    st.json(valuation_extractor(prompt=prompt), expanded=True)
+                except Exception as e:
+                    st.error(f"Error extracting valuation: {str(e)}")
                 st.write("Industry Benchmarks:")
-                st.json(industry_benchmarks_extractor(prompt=prompt), expanded=True)
+                try:
+                    st.json(industry_benchmarks_extractor(prompt=prompt), expanded=True)
+                except Exception as e:
+                    st.error(f"Error extracting industry benchmarks: {str(e)}")
                 st.write("Risk Factors:")
-                st.json(risk_factors_extractor(prompt=prompt), expanded=True)
+                try:
+                    st.json(risk_factors_extractor(prompt=prompt), expanded=True)
+                except Exception as e:
+                    st.error(f"Error extracting risk factors: {str(e)}")
 
 
                 # st.json({
