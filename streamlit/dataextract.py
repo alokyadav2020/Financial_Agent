@@ -374,10 +374,11 @@ def main():
         
         st.write("Text extracted from PDF.")
         
-        prompt = f"Here is the financial statement of General Motors:\n\n{txt}"
+        
         
         with st.spinner("Extracting financial information..."):
             try:
+                prompt = f"Here is the financial statement of General Motors:\n\n{txt}"
                 
                 
 
@@ -557,17 +558,17 @@ def main():
                 st.write("Financial Metrics:")
                 st.json(financial_metrics_extractor(prompt), expanded=True)
                 st.write("Balance Sheet:")
-                st.json(balance_sheet_extractor(prompt), expanded=True)
+                st.json(balance_sheet_extractor(prompt=prompt), expanded=True)
                 st.write("Key Performance Indicators:")
-                st.json(kpis_extractor(prompt), expanded=True)
+                st.json(kpis_extractor(prompt=prompt), expanded=True)
                 st.write("Cash Flow:")
-                st.json(cash_flow_extractor(prompt), expanded=True)
+                st.json(cash_flow_extractor(prompt=prompt), expanded=True)
                 st.write("Valuation:")
-                st.json(valuation_extractor(prompt), expanded=True)
+                st.json(valuation_extractor(prompt=prompt), expanded=True)
                 st.write("Industry Benchmarks:")
-                st.json(industry_benchmarks_extractor(prompt), expanded=True)
+                st.json(industry_benchmarks_extractor(prompt=prompt), expanded=True)
                 st.write("Risk Factors:")
-                st.json(risk_factors_extractor(prompt), expanded=True)
+                st.json(risk_factors_extractor(prompt=prompt), expanded=True)
 
 
                 # st.json({
