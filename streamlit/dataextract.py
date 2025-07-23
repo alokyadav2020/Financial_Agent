@@ -241,8 +241,8 @@ def balance_sheet_extractor(prompt):
         Clean the noisy OCR text to find accurate numbers. If data for a year is missing, omit that entry. Ensure all information is sourced from the document.
         """
     )
-    r3= agent.run(prompt)
-    return r3.content.model_dump_json(indent=2)
+    r3= agent.run(prompt).content.model_dump_json(indent=2)
+    return r3
 
 
 def kpis_extractor(prompt):
@@ -266,8 +266,9 @@ def kpis_extractor(prompt):
         Base calculations on document data.
         """
     )
-    r5= agent.run(prompt)
-    return r5.content.model_dump_json(indent=2)
+    r5= agent.run(prompt).content.model_dump_json(indent=2)
+    # r5 = agent.run(prompt)
+    return r5
 
 def cash_flow_extractor(prompt):
     model = create_model()
@@ -294,8 +295,9 @@ def cash_flow_extractor(prompt):
         Ensure all information is directly sourced from official documents. If a value is not found, set to 0.0.
         """
     )
-    r6= agent.run(prompt)
-    return r6.content.model_dump_json(indent=2)
+    r6= agent.run(prompt).content.model_dump_json(indent=2)
+    # r6 = agent.run(prompt)
+    return r6
 
 def valuation_extractor(prompt):
     model = create_model()
@@ -313,8 +315,8 @@ def valuation_extractor(prompt):
         Use numbers in millions. Reasonable assumptions for missing data.
         """
     )
-    r7= agent.run(prompt)
-    return r7.content.model_dump_json(indent=2)
+    r7= agent.run(prompt).content.model_dump_json(indent=2)
+    return r7
 
 def industry_benchmarks_extractor(prompt):
     model_ = create_model()
@@ -333,8 +335,8 @@ def industry_benchmarks_extractor(prompt):
         Use standard data from knowledge (e.g., gross margin ~20%, etc.).
         """
     )
-    r8= agent.run(prompt)
-    return r8.content.model_dump_json(indent=2)
+    r8= agent.run(prompt).content.model_dump_json(indent=2)
+    return r8
 
 def risk_factors_extractor(prompt):
     model = create_model()
@@ -354,8 +356,8 @@ def risk_factors_extractor(prompt):
         Base on document content.
         """
     )
-    r9= agent.run(prompt)
-    return r9.content.model_dump_json(indent=2)
+    r9= agent.run(prompt).content.model_dump_json(indent=2)
+    return r9
 
 
 
