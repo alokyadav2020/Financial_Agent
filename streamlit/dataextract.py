@@ -621,6 +621,9 @@ from openai import AzureOpenAI
 import PyPDF2  # Requires installation: pip install pypdf2
 import streamlit as st
 import tempfile
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
 # Define the Pydantic models as provided
 class CompanyInfo(BaseModel):
@@ -691,6 +694,23 @@ class RiskFactors(BaseModel):
     debt_level: str = Field(..., description="Debt level: 'low', 'medium', or 'high'")
     market_cyclicality: str = Field(..., description="Market cyclicality: 'low', 'medium', or 'high'")
 
+class YearlyCashFlow(BaseModel):
+    year: str = Field(..., description="Year as string e.g. '2023'")
+    net_income: float = Field(..., description="Net Income")
+    adjustments_for_non_cash_items: float = Field(..., description="Adjustments for Non-Cash Items")
+    changes_in_working_capital: float = Field(..., description="Changes in Working Capital")
+    cash_from_operating_activities: float = Field(..., description="Cash from Operating Activities")
+    cash_from_investing_activities: float = Field(..., description="Cash from Investing Activities")
+    cash_from_financing_activities: float = Field(..., description="Cash from Financing Activities")
+    net_cash_flow: float = Field(..., description="Net Cash Flow")
+    beginning_cash_balance: float = Field(..., description="Beginning Cash Balance")
+    ending_cash_balance: float = Field(..., description="Ending Cash Balance")
+
+class CashFlowData(BaseModel):
+    # yearly_data: Dict[str, YearlyCashFlow] = Field(..., description="Cash flow data keyed by year as string e.g. '2023'") 
+    yearly_data: List[YearlyCashFlow] = Field(..., description="Cash flow data keyed by year as string e.g. '2023'")    
+
+
 # Define a root model to encompass all the required information
 class CompanyReport(BaseModel):
     company_info: CompanyInfo
@@ -700,6 +720,7 @@ class CompanyReport(BaseModel):
     valuation: Valuation
     industry_benchmarks: IndustryBenchmarks
     risk_factors: RiskFactors
+    cash_flow : CashFlowData
 
 class PDFCompanyExtractor:
     def __init__(self):
