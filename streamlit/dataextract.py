@@ -612,9 +612,240 @@
 
 # if __name__ == "__main__":
 #     main()
+#________________________________________________________________________________________________________________________
+# import os
+# import json
+# from typing import List
+# from pydantic import BaseModel, Field
+# from openai import AzureOpenAI
+# # from azure.identity import DefaultAzureCredential, get_bearer_token_provider
+# import PyPDF2  # Requires installation: pip install pypdf2
+# import streamlit as st
+# import tempfile
+# from dotenv import load_dotenv
+# import os
+# load_dotenv()
+
+# # Define the Pydantic models as provided
+# class CompanyInfo(BaseModel):
+#     name: str = Field(..., description="Company's legal name")
+#     industry: str = Field(..., description="Primary industry")
+#     sectors: List[str] = Field(..., description="List of business sectors")
+#     year_founded: int = Field(..., description="Year the company was founded")
+#     employees: int = Field(..., description="Number of employees as of the latest year")
+#     website: str = Field(..., description="Company website")
+#     ein: str = Field(..., description="Employer Identification Number (EIN) for tax purposes")
+
+# class YearlyFinancialData(BaseModel):
+#     year: str = Field(..., description="Year as string e.g. '2023'")
+#     revenue: int = Field(..., description="Total net sales and revenue in millions")
+#     cogs: int = Field(..., description="Cost of sales in millions")
+#     operating_expenses: int = Field(..., description="Selling, general and administrative expenses in millions")
+#     ebitda: int = Field(..., description="EBITDA in millions (operating income + depreciation and amortization)")
+
+# class FinancialMetrics(BaseModel):
+#     yearly_data: List[YearlyFinancialData] = Field(..., description="List of financial data for the last 3 years")
+
+# class Debt(BaseModel):
+#     long_term: int = Field(..., description="Long-term debt and finance lease obligations in millions")
+#     short_term: int = Field(..., description="Short-term debt and current portion of long-term debt in millions")
+
+# class YearlyBalanceSheet(BaseModel):
+#     year: str = Field(..., description="Year as string e.g. '2023'")
+#     total_assets: int = Field(..., description="Total assets in millions")
+#     total_liabilities: int = Field(..., description="Total liabilities in millions")
+#     equity: int = Field(..., description="Total equity attributable to stockholders in millions")
+#     debt: Debt
+#     cash: int = Field(..., description="Cash and cash equivalents in millions")
+
+# class BalanceSheet(BaseModel):
+#     yearly_data: List[YearlyBalanceSheet] = Field(..., description="List of balance sheet data for the last 3 years where available")
+
+# class YearlyKPIs(BaseModel):
+#     year: str = Field(..., description="Year as string e.g. '2023'")
+#     gross_margin: float = Field(..., description="Gross margin percentage")
+#     operating_margin: float = Field(..., description="Operating margin percentage")
+#     debt_to_equity: float = Field(..., description="Debt to equity ratio")
+#     current_ratio: float = Field(..., description="Current ratio")
+#     revenue_growth: float = Field(..., description="Revenue growth percentage from previous year; 0 for the earliest year")
+#     market_share: float = Field(..., description="Market share percentage if available; otherwise 0.0")
+
+# class KPIs(BaseModel):
+#     yearly_data: List[YearlyKPIs] = Field(..., description="List of KPIs for the last 3 years")
+
+# class ValuationRange(BaseModel):
+#     low: int = Field(..., description="Low estimate of company valuation in millions")
+#     high: int = Field(..., description="High estimate of company valuation in millions")
+
+# class Valuation(BaseModel):
+#     enterprise_value: int = Field(..., description="Enterprise value in millions")
+#     ev_ebitda_multiple: float = Field(..., description="EV/EBITDA multiple")
+#     valuation_range: ValuationRange
+
+# class IndustryBenchmarks(BaseModel):
+#     avg_gross_margin: float = Field(..., description="Average gross margin percentage for automotive industry")
+#     avg_operating_margin: float = Field(..., description="Average operating margin percentage for automotive industry")
+#     avg_debt_to_equity: float = Field(..., description="Average debt to equity ratio for automotive industry")
+#     avg_revenue_growth: float = Field(..., description="Average revenue growth percentage for automotive industry")
+
+# class RiskFactors(BaseModel):
+#     high_customer_concentration: bool = Field(..., description="True if high customer concentration risk")
+#     geographic_concentration: bool = Field(..., description="True if geographic concentration risk")
+#     supply_chain_dependency: bool = Field(..., description="True if supply chain dependency risk")
+#     debt_level: str = Field(..., description="Debt level: 'low', 'medium', or 'high'")
+#     market_cyclicality: str = Field(..., description="Market cyclicality: 'low', 'medium', or 'high'")
+
+# class YearlyCashFlow(BaseModel):
+#     year: str = Field(..., description="Year as string e.g. '2023'")
+#     net_income: float = Field(..., description="Net Income")
+#     adjustments_for_non_cash_items: float = Field(..., description="Adjustments for Non-Cash Items")
+#     changes_in_working_capital: float = Field(..., description="Changes in Working Capital")
+#     cash_from_operating_activities: float = Field(..., description="Cash from Operating Activities")
+#     cash_from_investing_activities: float = Field(..., description="Cash from Investing Activities")
+#     cash_from_financing_activities: float = Field(..., description="Cash from Financing Activities")
+#     net_cash_flow: float = Field(..., description="Net Cash Flow")
+#     beginning_cash_balance: float = Field(..., description="Beginning Cash Balance")
+#     ending_cash_balance: float = Field(..., description="Ending Cash Balance")
+
+# class CashFlowData(BaseModel):
+#     # yearly_data: Dict[str, YearlyCashFlow] = Field(..., description="Cash flow data keyed by year as string e.g. '2023'") 
+#     yearly_data: List[YearlyCashFlow] = Field(..., description="Cash flow data keyed by year as string e.g. '2023'")    
+
+
+# # Define a root model to encompass all the required information
+# class CompanyReport(BaseModel):
+#     company_info: CompanyInfo
+#     financial_metrics: FinancialMetrics
+#     balance_sheet: BalanceSheet
+#     kpis: KPIs
+#     valuation: Valuation
+#     industry_benchmarks: IndustryBenchmarks
+#     risk_factors: RiskFactors
+#     cash_flow : CashFlowData
+
+# class PDFCompanyExtractor:
+#     def __init__(self):
+#         endpoint = os.getenv("ENDPOINT_URL", "https://info-mdeiaw6z-eastus2.openai.azure.com/")
+#         deployment = os.getenv("DEPLOYMENT_NAME", "gpt-4.1-nano")
+        
+#         # Initialize Azure OpenAI client with Entra ID authentication
+        
+        
+#         self.client = AzureOpenAI(
+#             azure_endpoint=endpoint,
+#             azure_deployment=deployment,
+#             api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+#             api_version=os.getenv("api_version", "2025-04-01-preview"),  # Use the latest version
+            
+#         )
+#         self.deployment = deployment
+
+#     def extract_text_from_pdf(self, pdf_path: str) -> str:
+#         """
+#         Reads a PDF file and extracts all text from it.
+        
+#         :param pdf_path: Path to the PDF file.
+#         :return: Extracted text as a single string.
+#         """
+#         text = ""
+#         with open(pdf_path, "rb") as file:
+#             reader = PyPDF2.PdfReader(file)
+#             for page in reader.pages:
+#                 text += page.extract_text() + "\n"
+#         return text.strip()
+
+#     def make_schema_strict(self, schema: dict) -> dict:
+#         """
+#         Recursively sets 'additionalProperties': False for all objects in the JSON schema.
+        
+#         :param schema: The JSON schema dictionary.
+#         :return: Modified schema with strict properties.
+#         """
+#         if isinstance(schema, dict):
+#             if 'properties' in schema and schema.get('type') == 'object':
+#                 schema['additionalProperties'] = False
+#             for key, value in schema.items():
+#                 schema[key] = self.make_schema_strict(value)
+#         elif isinstance(schema, list):
+#             schema = [self.make_schema_strict(item) for item in schema]
+#         return schema
+
+#     def extract_company_info(self, pdf_path: str) -> dict:
+#         """
+#         Extracts company information from a PDF file in the specified JSON format.
+        
+#         :param pdf_path: Path to the PDF file.
+#         :return: Dictionary containing the extracted company information.
+#         """
+#         text = self.extract_text_from_pdf(pdf_path)
+        
+#         # Prepare the JSON schema for structured output
+#         schema = CompanyReport.model_json_schema()
+#         strict_schema = self.make_schema_strict(schema)
+        
+#         # Prompt for extraction
+#         system_prompt = (
+#             "You are an expert at extracting structured company information from financial documents. "
+#             "Extract the information accurately based on the provided text. If data is missing or unclear, "
+#             "use reasonable defaults or estimates where specified (e.g., 0.0 for market_share if unavailable). "
+#             "Ensure all fields are filled."
+#         )
+#         user_prompt = f"Extract the company report information from the following text:\n\n{text}"
+        
+#         response = self.client.chat.completions.create(
+#             model=self.deployment,
+#             messages=[
+#                 {"role": "system", "content": system_prompt},
+#                 {"role": "user", "content": user_prompt}
+#             ],
+#             response_format={
+#                 "type": "json_schema",
+#                 "json_schema": {
+#                     "name": "company_report",
+#                     "strict": True,
+#                     "schema": strict_schema
+#                 }
+#             },
+#             temperature=0.0
+#         )
+        
+#         # Parse the JSON response
+#         extracted_json = json.loads(response.choices[0].message.content)
+#         return extracted_json
+# def main():
+# # Streamlit app
+#     st.title("PDF Company Information Extractor")
+
+#     uploaded_file = st.file_uploader("Upload a PDF file", type="pdf")
+
+#     if uploaded_file is not None:
+#         try:
+#             # Save uploaded file to a temporary location
+#             with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
+#                 tmp_file.write(uploaded_file.getvalue())
+#                 tmp_path = tmp_file.name
+
+#             # Extract information
+#             extractor = PDFCompanyExtractor()
+#             result = extractor.extract_company_info(tmp_path)
+
+#             # Display JSON result
+#             st.json(result)
+
+#         except Exception as e:
+#             st.error(f"An error occurred: {str(e)}")
+
+#         finally:
+#             # Clean up temporary file
+#             if os.path.exists(tmp_path):
+#                 os.unlink(tmp_path)
+
+# if __name__ == "__main__":
+#     main()                
+#____________________________________________________________________________________________________________________________________
 import os
 import json
-from typing import List
+from typing import List, Type, Dict
 from pydantic import BaseModel, Field
 from openai import AzureOpenAI
 # from azure.identity import DefaultAzureCredential, get_bearer_token_provider
@@ -707,9 +938,7 @@ class YearlyCashFlow(BaseModel):
     ending_cash_balance: float = Field(..., description="Ending Cash Balance")
 
 class CashFlowData(BaseModel):
-    # yearly_data: Dict[str, YearlyCashFlow] = Field(..., description="Cash flow data keyed by year as string e.g. '2023'") 
     yearly_data: List[YearlyCashFlow] = Field(..., description="Cash flow data keyed by year as string e.g. '2023'")    
-
 
 # Define a root model to encompass all the required information
 class CompanyReport(BaseModel):
@@ -727,25 +956,15 @@ class PDFCompanyExtractor:
         endpoint = os.getenv("ENDPOINT_URL", "https://info-mdeiaw6z-eastus2.openai.azure.com/")
         deployment = os.getenv("DEPLOYMENT_NAME", "gpt-4.1-nano")
         
-        # Initialize Azure OpenAI client with Entra ID authentication
-        
-        
         self.client = AzureOpenAI(
             azure_endpoint=endpoint,
             azure_deployment=deployment,
             api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-            api_version=os.getenv("api_version", "2025-04-01-preview"),  # Use the latest version
-            
+            api_version=os.getenv("api_version", "2025-04-01-preview"),
         )
         self.deployment = deployment
 
     def extract_text_from_pdf(self, pdf_path: str) -> str:
-        """
-        Reads a PDF file and extracts all text from it.
-        
-        :param pdf_path: Path to the PDF file.
-        :return: Extracted text as a single string.
-        """
         text = ""
         with open(pdf_path, "rb") as file:
             reader = PyPDF2.PdfReader(file)
@@ -754,12 +973,6 @@ class PDFCompanyExtractor:
         return text.strip()
 
     def make_schema_strict(self, schema: dict) -> dict:
-        """
-        Recursively sets 'additionalProperties': False for all objects in the JSON schema.
-        
-        :param schema: The JSON schema dictionary.
-        :return: Modified schema with strict properties.
-        """
         if isinstance(schema, dict):
             if 'properties' in schema and schema.get('type') == 'object':
                 schema['additionalProperties'] = False
@@ -769,27 +982,20 @@ class PDFCompanyExtractor:
             schema = [self.make_schema_strict(item) for item in schema]
         return schema
 
-    def extract_company_info(self, pdf_path: str) -> dict:
+    def _extract_section(self, pdf_text: str, model: Type[BaseModel], section_name: str, description: str) -> Dict:
         """
-        Extracts company information from a PDF file in the specified JSON format.
-        
-        :param pdf_path: Path to the PDF file.
-        :return: Dictionary containing the extracted company information.
+        A generic helper function to call the OpenAI API for a specific section.
         """
-        text = self.extract_text_from_pdf(pdf_path)
-        
-        # Prepare the JSON schema for structured output
-        schema = CompanyReport.model_json_schema()
+        schema = model.model_json_schema()
         strict_schema = self.make_schema_strict(schema)
-        
-        # Prompt for extraction
+
         system_prompt = (
-            "You are an expert at extracting structured company information from financial documents. "
-            "Extract the information accurately based on the provided text. If data is missing or unclear, "
-            "use reasonable defaults or estimates where specified (e.g., 0.0 for market_share if unavailable). "
-            "Ensure all fields are filled."
+            f"You are an expert at extracting structured company information from financial documents. "
+            f"Your task is to extract only the {description}. "
+            f"Analyze the provided text and accurately fill in all the fields for the {section_name}. "
+            "If data is missing or unclear, use reasonable defaults or estimates where specified."
         )
-        user_prompt = f"Extract the company report information from the following text:\n\n{text}"
+        user_prompt = f"From the following text, extract the {section_name}:\n\n{pdf_text}"
         
         response = self.client.chat.completions.create(
             model=self.deployment,
@@ -800,7 +1006,7 @@ class PDFCompanyExtractor:
             response_format={
                 "type": "json_schema",
                 "json_schema": {
-                    "name": "company_report",
+                    "name": f"extract_{section_name.lower().replace(' ', '_')}",
                     "strict": True,
                     "schema": strict_schema
                 }
@@ -808,36 +1014,94 @@ class PDFCompanyExtractor:
             temperature=0.0
         )
         
-        # Parse the JSON response
-        extracted_json = json.loads(response.choices[0].message.content)
-        return extracted_json
+        return json.loads(response.choices[0].message.content)
+
+    def extract_company_info(self, pdf_text: str) -> Dict:
+        return self._extract_section(pdf_text, CompanyInfo, "Company Info", "company's legal name, industry, sectors, year founded, employees, website, and EIN")
+
+    def extract_financial_metrics(self, pdf_text: str) -> Dict:
+        return self._extract_section(pdf_text, FinancialMetrics, "Financial Metrics", "yearly financial data including revenue, COGS, operating expenses, and EBITDA")
+
+    def extract_balance_sheet(self, pdf_text: str) -> Dict:
+        return self._extract_section(pdf_text, BalanceSheet, "Balance Sheet", "yearly balance sheet data including assets, liabilities, equity, debt, and cash")
+
+    def extract_kpis(self, pdf_text: str) -> Dict:
+        return self._extract_section(pdf_text, KPIs, "KPIs", "yearly Key Performance Indicators like margins, debt-to-equity, current ratio, and revenue growth")
+
+    def extract_valuation(self, pdf_text: str) -> Dict:
+        return self._extract_section(pdf_text, Valuation, "Valuation", "company valuation details including enterprise value, EV/EBITDA multiple, and a valuation range")
+
+    def extract_industry_benchmarks(self, pdf_text: str) -> Dict:
+        return self._extract_section(pdf_text, IndustryBenchmarks, "Industry Benchmarks", "average industry metrics for margins, debt-to-equity, and revenue growth")
+
+    def extract_risk_factors(self, pdf_text: str) -> Dict:
+        return self._extract_section(pdf_text, RiskFactors, "Risk Factors", "key risk factors such as customer/geographic concentration, supply chain dependency, debt level, and market cyclicality")
+
+    def extract_cash_flow(self, pdf_text: str) -> Dict:
+        return self._extract_section(pdf_text, CashFlowData, "Cash Flow Data", "yearly cash flow statements including operating, investing, and financing activities")
+
+
 def main():
-# Streamlit app
     st.title("PDF Company Information Extractor")
 
     uploaded_file = st.file_uploader("Upload a PDF file", type="pdf")
 
     if uploaded_file is not None:
+        tmp_path = ""
         try:
-            # Save uploaded file to a temporary location
             with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
                 tmp_file.write(uploaded_file.getvalue())
                 tmp_path = tmp_file.name
-
-            # Extract information
+            
             extractor = PDFCompanyExtractor()
-            result = extractor.extract_company_info(tmp_path)
+            
+            with st.spinner("Extracting text from PDF..."):
+                pdf_text = extractor.extract_text_from_pdf(tmp_path)
+            
+            st.success("Text extracted from PDF.")
+            
+            final_report = {}
+            with st.spinner("Extracting company information section by section..."):
+                
+                status = st.status("Processing...", expanded=True)
 
+                status.write("Extracting Company Info...")
+                final_report['company_info'] = extractor.extract_company_info(pdf_text)
+                
+                status.write("Extracting Financial Metrics...")
+                final_report['financial_metrics'] = extractor.extract_financial_metrics(pdf_text)
+                
+                status.write("Extracting Balance Sheet...")
+                final_report['balance_sheet'] = extractor.extract_balance_sheet(pdf_text)
+
+                status.write("Extracting KPIs...")
+                final_report['kpis'] = extractor.extract_kpis(pdf_text)
+
+                status.write("Extracting Valuation...")
+                final_report['valuation'] = extractor.extract_valuation(pdf_text)
+
+                status.write("Extracting Industry Benchmarks...")
+                final_report['industry_benchmarks'] = extractor.extract_industry_benchmarks(pdf_text)
+
+                status.write("Extracting Risk Factors...")
+                final_report['risk_factors'] = extractor.extract_risk_factors(pdf_text)
+                
+                status.write("Extracting Cash Flow Data...")
+                final_report['cash_flow'] = extractor.extract_cash_flow(pdf_text)
+
+                status.update(label="Extraction complete!", state="complete", expanded=False)
+
+            st.success("All sections extracted successfully!")
+            
             # Display JSON result
-            st.json(result)
+            st.json(final_report)
 
         except Exception as e:
             st.error(f"An error occurred: {str(e)}")
 
         finally:
-            # Clean up temporary file
-            if os.path.exists(tmp_path):
+            if tmp_path and os.path.exists(tmp_path):
                 os.unlink(tmp_path)
 
 if __name__ == "__main__":
-    main()                
+    main()
