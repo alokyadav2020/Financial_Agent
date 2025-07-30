@@ -2,16 +2,22 @@ import os
 import json
 from typing import List
 from pydantic import BaseModel, Field
-from openai import AzureOpenAI
+# from openai import AzureOpenAI
 # from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 import PyPDF2  # Requires installation: pip install pypdf2
 import streamlit as st
 import tempfile
+from agno.agent import Agent,RunResponse
+from agno.models.azure import AzureOpenAI
+from agno.team.team import Team
+from textwrap import dedent
 from dotenv import load_dotenv
 import os
 load_dotenv()
 
 # Define the Pydantic models as provided
+
+
 class CompanyInfo(BaseModel):
     name: str = Field(..., description="Company's legal name")
     industry: str = Field(..., description="Primary industry")
@@ -111,16 +117,17 @@ class CompanyReport(BaseModel):
 class PDFCompanyExtractor:
     def __init__(self):
         endpoint = os.getenv("ENDPOINT_URL", "https://info-mdeiaw6z-eastus2.cognitiveservices.azure.com/")
-        deployment = os.getenv("DEPLOYMENT_NAME", "gpt-4.1-nano")
+        deployment = os.getenv("DEPLOYMENT_NAME", "gpt-4.1-mini")
         
         # Initialize Azure OpenAI client with Entra ID authentication
         
         
         self.client = AzureOpenAI(
-            azure_endpoint=endpoint,
-            azure_deployment=deployment,
-            api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-            api_version=os.getenv("api_version", "2024-12-01-preview"),  # Use the latest version
+                    azure_endpoint=endpoint,
+                    azure_deployment=deployment,
+                    api_key=os.getenv("AZURE_OPENAI_API_KEY", "your_api_key_here"),
+                    api_version="2024-12-01-preview",
+                    
             
         )
         self.deployment = deployment
@@ -155,7 +162,7 @@ class PDFCompanyExtractor:
             schema = [self.make_schema_strict(item) for item in schema]
         return schema
 
-    def extract_company_info(self, text: str) -> dict:
+    def extract_company_info(self, financial_doc: str) -> RunResponse:
         """
         Extracts company information from the provided text in the specified JSON format.
         
@@ -163,92 +170,70 @@ class PDFCompanyExtractor:
         :return: Dictionary containing the extracted company information.
         """
         # Prepare the JSON schema for structured output
-        schema = CompanyInfo.model_json_schema()
-        strict_schema = self.make_schema_strict(schema)
+        CompanyInfoAgent = Agent(
+        name="CompanyInfoExtractor",
+        model=self.client,
+        description="Extract and analyze company profile information",
+        response_model=CompanyInfo,
+        use_json_mode=True,
+        context={"financial_doc":financial_doc},
+        add_context=True,
+        instructions=dedent("""
+        Analyze the financial statements and extract key company information:
+        1. Identify the complete legal company name (e.g., General Motors Company)
+        2. Determine the primary industry classification (e.g., Automotive)
+        3. List all business sectors the company operates in (e.g., electric vehicles, safety services)
+        4. Find or infer the year the company was founded; if not in document, use known value 1908 for GM
+        5. Find the number of employees; if not in document, set to 0 or known approximate
+        6. Find the company website (e.g., https://www.gm.com)
+        7. Locate the Employer Identification Number (EIN) for tax purposes; if not in document, set to 'unknown'
         
-        # Prompt for extraction
-        system_prompt = (
-            "You are an expert at extracting structured company information from financial documents. "
-            "Extract the information accurately based on the provided text. If data is missing or unclear, "
-            "use reasonable defaults or estimates where specified (e.g., 0.0 for market_share if unavailable). "
-            "Ensure all fields are filled."
-        )
-        user_prompt = f"Extract the company info from the following text:\n\n{text}"
-        
-        response = self.client.chat.completions.create(
-            model=self.deployment,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            response_format={
-                "type": "json_schema",
-                "json_schema": {
-                    "name": "company_info",
-                    "strict": True,
-                    "schema": strict_schema
-                }
-            },
-            temperature=0.0
-        )
-        
-        # Parse the JSON response
-        extracted_json = json.loads(response.choices[0].message.content)
-        return extracted_json
+        Ensure information is sourced from the document where possible; use reasonable defaults if missing.
+        """
+    ))
+        return CompanyInfoAgent
 
-    def extract_financial_metrics(self, text: str) -> dict:
+    def extract_financial_metrics(self, financial_doc: str) -> RunResponse:
         """
         Extracts financial metrics from the provided text in the specified JSON format.
         
         :param text: Extracted text from the PDF.
         :return: Dictionary containing the extracted financial metrics.
         """
-        # Prepare the JSON schema for structured output
-        schema = FinancialMetrics.model_json_schema()
-        strict_schema = self.make_schema_strict(schema)
-        
-        # Prompt for extraction
-        system_prompt = (
-            "You are FinancialMetricsExtractor, an AI agent specialized in parsing and extracting key financial metrics from lengthy financial documents such as annual reports, 10-K filings, or earnings statements, which may span 80-90 pages or more.\n\n"
-            "Agent Aim: Your primary goal is to accurately identify and extract financial metrics for the last 3 years (or available years) from the provided text, handling variations in terminology, table formats, and document structures. Focus on income statement-related data, cross-referencing sections like consolidated statements of operations, financial highlights, or management's discussion for completeness. If data is incomplete fill all fields with blank.\n\n"
-            "Instructions:\n"
-            "- Scan the entire text thoroughly, including tables, footnotes, and narrative sections, to locate relevant financial data.\n"
-            "- Handle synonyms and variations: Fields may use different names across documents (e.g., 'Revenue' could be 'Net sales' or 'Total income').\n"
-            "- Prioritize the most recent fiscal years, typically the last 3, and order them from newest to oldest.\n"
-            "- Extract the following fields for each year:\n"
-            "- If a field is not explicitly stated, use reasonable defaults (e.g., 0.0 for market share if not available).\n"
-            "- Ensure the output strictly adheres to the JSON schema; do not add extra fields or explanations.\n\n"
-            "Field Descriptions (use these to guide extraction):\n"
-            "- year: The fiscal or calendar year as a string (e.g., '2023'). Look for headers like 'Year Ended December 31, 2023' or 'FY2022'.\n"
-            "- revenue: Top-line figure like total net sales or revenue in millions.\n"
-            "- cogs: Direct costs like cost of goods sold or cost of sales in millions.\n"
-            "- operating_expenses: Indirect costs like SG&A or operating expenses in millions.\n"
-            "- ebitda: EBITDA, DO not use calculable equivalent in millions."
-        )
-        user_prompt = f"Extract the financial metrics from the following text (which may be extensive):\n\n{text}"
-        
-        response = self.client.chat.completions.create(
-            model=self.deployment,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            response_format={
-                "type": "json_schema",
-                "json_schema": {
-                    "name": "financial_metrics",
-                    "strict": True,
-                    "schema": strict_schema
-                }
-            },
-            temperature=0.0
-        )
-        
-        # Parse the JSON response
-        extracted_json = json.loads(response.choices[0].message.content)
-        return extracted_json
+        FinancialMetricsAgent = Agent(
+        name="FinancialMetricsExtractor",
+        model=self.client,
+        goal="Extract yearly financial metrics from financial documents",
+        description=dedent("""
+    An AI agent designed to extract key yearly financial metrics from financial documents such as annual reports, 10-K filings, or earnings statements. It parses lengthy texts to identify and structure data like revenue, COGS, operating expenses, and EBITDA for the most recent years available.
 
-    def extract_balance_sheet(self, text: str) -> dict:
+    """),
+        response_model=FinancialMetrics,
+        use_json_mode=True,
+        context={"financial_doc":financial_doc},
+        add_context=True,
+        instructions=dedent("""
+        "You are FinancialMetricsExtractor, an AI agent specialized in parsing and extracting key financial metrics from lengthy financial documents such as annual reports, 10-K filings, or earnings statements, which may span 80-90 pages or more.\n\n"
+                "Agent Aim: Your primary goal is to accurately identify and extract financial metrics for the last 3 years (or available years) from the provided text, handling variations in terminology, table formats, and document structures. Focus on income statement-related data, cross-referencing sections like consolidated statements of operations, financial highlights, or management's discussion for completeness. If data is incomplete fill all fields with blank.\n\n"
+                "Instructions:\n"
+                "- Scan the entire text thoroughly, including tables, footnotes, and narrative sections, to locate relevant financial data.\n"
+                "- Handle synonyms and variations: Fields may use different names across documents (e.g., 'Revenue' could be 'Net sales' or 'Total income').\n"
+                "- Prioritize the most recent fiscal years, typically the last 3, and order them from newest to oldest.\n"
+                "- Extract the following fields for each year:\n"
+                "- If a field is not explicitly stated, use reasonable defaults (e.g., 0.0 for market share if not available).\n"
+                "- Ensure the output strictly adheres to the JSON schema; do not add extra fields or explanations.\n\n"
+                "Field Descriptions (use these to guide extraction):\n"
+                "- year: The fiscal or calendar year as a string (e.g., '2023'). Look for headers like 'Year Ended December 31, 2023' or 'FY2022'.\n"
+                "- revenue: Top-line figure like total net sales or revenue in millions.\n"
+                "- cogs: Direct costs like cost of goods sold or cost of sales in millions.\n"
+                "- operating_expenses: Indirect costs like SG&A or operating expenses in millions.\n"
+                "- ebitda: EBITDA, DO not use calculable equivalent in millions."
+                """
+    ))
+
+        return FinancialMetricsAgent
+
+    def extract_balance_sheet(self, financial_doc: str) -> RunResponse:
         """
         Extracts balance sheet from the provided text in the specified JSON format.
         
@@ -256,53 +241,41 @@ class PDFCompanyExtractor:
         :return: Dictionary containing the extracted balance sheet.
         """
         # Prepare the JSON schema for structured output
-        schema = BalanceSheet.model_json_schema()
-        strict_schema = self.make_schema_strict(schema)
-        
-        # Prompt for extraction
-        system_prompt = (
-            "You are BalanceSheetExtractor, an AI agent specialized in parsing and extracting key balance sheet data from lengthy financial documents such as annual reports, 10-K filings, or financial statements, which may span 80-90 pages or more.\n\n"
-            "Agent Aim: Your primary goal is to accurately identify and extract balance sheet metrics for the last 3 years (or available years) from the provided text, handling variations in terminology, table formats, and document structures. Focus on consolidated balance sheets or statements of financial position, cross-referencing sections like financial highlights, notes to financial statements, or management's discussion for completeness. If data is incomplete, use logical estimates based on context (e.g., sum sub-items for totals) and fill all fields without leaving any blank.\n\n"
-            "Instructions:\n"
-            "- Scan the entire text thoroughly, including tables, footnotes, and narrative sections, to locate relevant balance sheet data.\n"
-            "- Handle synonyms and variations: Fields may use different names across documents (e.g., 'Total assets' could be 'Assets' or 'Total resources').\n"
-            "- Prioritize the most recent fiscal years, typically the last 3, and order them from newest to oldest.\n"
-            "- Convert all monetary values to millions (e.g., if reported in thousands, divide by 1,000; if in billions, multiply by 1,000). Round to the nearest integer.\n"
-            "- If exact values are missing, derive them where possible (e.g., Total liabilities = Current liabilities + Non-current liabilities) or use 0 as a last resort.\n"
-            "- Ensure the output strictly adheres to the JSON schema; do not add extra fields or explanations.\n\n"
-            "Field Descriptions (use these to guide extraction):\n"
-            "- year: The fiscal or calendar year as a string (e.g., '2023'). Look for headers like 'As of December 31, 2023' or 'FY2022'.\n"
-            "- total_assets: Grand total of all assets in millions.\n"
-            "- total_liabilities: Grand total of all liabilities in millions.\n"
-            "- equity: Equity attributable to owners/stockholders in millions.\n"
-            "- debt.long_term: Non-current debt obligations in millions.\n"
-            "- debt.short_term: Current debt obligations in millions.\n"
-            "- cash: Cash holdings and equivalents in millions."
-        )
-        user_prompt = f"Extract the balance sheet from the following text (which may be extensive):\n\n{text}"
-        
-        response = self.client.chat.completions.create(
-            model=self.deployment,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            response_format={
-                "type": "json_schema",
-                "json_schema": {
-                    "name": "balance_sheet",
-                    "strict": True,
-                    "schema": strict_schema
-                }
-            },
-            temperature=0.0
-        )
-        
-        # Parse the JSON response
-        extracted_json = json.loads(response.choices[0].message.content)
-        return extracted_json
+        BalanceSheetAgent = Agent(
+        name="BalanceSheetExtractor",
+        goal="Your primary goal is to precisely parse and extract structured balance sheet data from provided financial documents, covering the most recent available years while accounting for inconsistencies in formatting, terminology, and reporting standards. Prioritize accuracy, completeness, and direct sourcing from the text to enable reliable financial analysis, setting any unavailable values to 0 for consistency.",
+        model=self.client,
+        description=dedent("""An AI agent designed to extract key balance sheet data from financial documents such as annual reports, 10-K filings, or financial statements. It parses lengthy texts to identify and structure data like total assets, liabilities, equity, debt (short-term and long-term), and cash for the most recent years available. """),
+        response_model=BalanceSheet,
+        use_json_mode=True,
+        context={"financial_doc":financial_doc},
+        add_context=True,
+        instructions=dedent("""
+        You are BalanceSheetExtractor, an AI agent specialized in parsing and extracting key balance sheet data from lengthy financial documents such as annual reports, 10-K filings, or financial statements, which may span 80-90 pages or more.
 
-    def extract_kpis(self, text: str) -> dict:
+            Agent Aim: Your primary goal is to accurately identify and extract balance sheet metrics for the last 3 years (or available years if fewer) from the provided text, handling variations in terminology, table formats, and document structures. Focus on consolidated balance sheet or statement of financial position data, cross-referencing sections like financial highlights, notes, or management's discussion for completeness. Clean noisy text to extract accurate numbers, ensuring all data is sourced directly from the document. If data for a field is incomplete or not found, set the value to 0 (do not leave blank or use null).
+
+            Instructions:
+            - Scan the entire text thoroughly, including tables, footnotes, and narrative sections, to locate relevant balance sheet data.
+            - Handle synonyms and variations: Fields may use different names across documents (e.g., 'Total assets' could be 'Assets, total' or 'Combined assets').
+            - Prioritize the most recent fiscal years, typically the last 3 (e.g., 2023, 2022, 2021), and order them from newest to oldest in the output list.
+            - Extract values in millions, rounding to the nearest integer if necessary. Assume the primary currency is USD unless otherwise specified.
+            - For debt: Sum sub-categories for long-term and short-term as needed; if not distinguished, allocate based on descriptions or set to 0 if unclear.
+            - Ensure the output strictly adheres to the JSON schema; do not add extra fields, explanations, or narrative text.
+            - If no balance sheet data is found for a year, do not include that year in the list.
+
+            Field Descriptions (use these to guide extraction):
+            - year: The fiscal or calendar year as a string (e.g., '2023'). Look for headers like 'As of December 31, 2023' or 'FY2022'.
+            - total_assets: Total assets in millions.
+            - total_liabilities: Total liabilities in millions.
+            - equity: Total equity attributable to stockholders in millions, excluding non-controlling interests.
+            - debt: Nested object with long_term (non-current debt) and short_term (current debt) in millions.
+            - cash: Cash and cash equivalents in millions, potentially including short-term investments if combined.
+        """
+    )  )
+        return BalanceSheetAgent
+
+    def extract_kpis(self, financial_doc: str) -> RunResponse:
         """
         Extracts KPIs from the provided text in the specified JSON format.
         
@@ -310,53 +283,44 @@ class PDFCompanyExtractor:
         :return: Dictionary containing the extracted KPIs.
         """
         # Prepare the JSON schema for structured output
-        schema = KPIs.model_json_schema()
-        strict_schema = self.make_schema_strict(schema)
-        
-        # Prompt for extraction
-        system_prompt = (
-            "You are KPIsExtractor, an AI agent specialized in parsing and extracting key performance indicators (KPIs) from lengthy financial documents such as annual reports, 10-K filings, or earnings statements, which may span 80-90 pages or more.\n\n"
-            "Agent Aim: Your primary goal is to accurately identify and extract KPIs for the last 3 years (or available years) from the provided text, handling variations in terminology, table formats, and document structures. Focus on financial ratios and growth metrics from income statements, balance sheets, MD&A, or key metrics sections, extracting only values that are directly stated in the document. Do not perform any calculations or derivations; assume all required values are explicitly available in the 10-K or financial documents. If a value is not directly stated, use 0.0 as specified. Fill all fields without leaving any blank.\n\n"
-            "Instructions:\n"
-            "- Scan the entire text thoroughly, including tables, footnotes, narrative sections, and management's discussion to locate explicitly stated KPIs.\n"
-            "- Handle synonyms and variations: Fields may use different names across documents (e.g., 'Gross margin' could be 'Gross profit margin').\n"
-            "- Prioritize the most recent fiscal years, typically the last 3, and order them from newest to oldest.\n"
-            "- Do not calculate any values; extract only what is directly provided in the text.\n"
-            "- If a value is not explicitly stated, use 0.0 as a default.\n"
-            "- Ensure the output strictly adheres to the JSON schema; do not add extra fields or explanations.\n\n"
-            "Field Descriptions (use these to guide extraction):\n"
-            "- year: The fiscal or calendar year as a string (e.g., '2023'). Look for headers like 'Year Ended December 31, 2023' or 'FY2022'.\n"
-            "- gross_margin: Gross profit margin as a percentage, directly stated.\n"
-            "- operating_margin: Operating profit margin as a percentage, directly stated.\n"
-            "- debt_to_equity: Total debt to equity as a ratio, directly stated.\n"
-            "- current_ratio: Current assets to current liabilities as a ratio, directly stated.\n"
-            "- revenue_growth: Year-over-year revenue increase as a percentage, directly stated (0 for the first year).\n"
-            "- market_share: Company's share of the market as a percentage, directly stated (0.0 if not specified)."
-        )
-        user_prompt = f"Extract the KPIs from the following text (which may be extensive):\n\n{text}"
-        
-        response = self.client.chat.completions.create(
-            model=self.deployment,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            response_format={
-                "type": "json_schema",
-                "json_schema": {
-                    "name": "kpis",
-                    "strict": True,
-                    "schema": strict_schema
-                }
-            },
-            temperature=0.0
-        )
-        
-        # Parse the JSON response
-        extracted_json = json.loads(response.choices[0].message.content)
-        return extracted_json
+        KPIsAgent = Agent(
+        name="KPIsExtractor",
+        model=self.client,
+        goal="Precisely parse and extract structured key performance indicators (KPIs) from provided financial documents, covering the most recent available years while accounting for inconsistencies in formatting, terminology, and reporting standards. Prioritize accuracy, completeness, and direct sourcing from the text to enable reliable financial analysis, setting any unavailable values to 0.0 for consistency.",
+        description="An AI agent designed to extract key performance indicators (KPIs) such as margins, ratios, growth rates, and market share from financial documents like annual reports, 10-K filings, or earnings statements. It parses lengthy texts to identify and structure KPI data for the most recent years available, using direct extraction where possible and calculations only if explicitly allowed in field descriptions.",
+        response_model=KPIs,
+        use_json_mode=True,
+        context={"financial_doc":financial_doc},
+        add_context=True,
+        instructions=dedent("""
+        You are KPIsExtractor, an AI agent specialized in parsing and extracting key performance indicators (KPIs) from lengthy financial documents such as annual reports, 10-K filings, or earnings statements, which may span 80-90 pages or more.
 
-    def extract_valuation(self, text: str) -> dict:
+            Agent Aim: Your primary goal is to accurately identify and extract KPIs for the last 3 years (or available years if fewer) from the provided text, handling variations in terminology, table formats, and document structures. Focus on sections like financial highlights, management's discussion and analysis (MD&A), or KPI summaries, cross-referencing with income statements, balance sheets, or notes for completeness. Extract values directly as stated; perform calculations only if the field description explicitly allows it (e.g., for revenue growth if not stated but revenues are available). If data for a field is incomplete or not found, set the value to 0.0 (do not leave blank or use null).
+
+            Instructions:
+            - Scan the entire text thoroughly, including tables, footnotes, and narrative sections, to locate relevant KPI data.
+            - Handle synonyms and variations: Fields may use different names across documents (e.g., 'Gross margin' could be 'Gross profit percentage' or 'GM%').
+            - Prioritize the most recent fiscal years, typically the last 3, and order them from newest to oldest in the output list.
+            - For percentages and ratios, report as floats (e.g., 25.5 for 25.5%, 1.5 for 1.5:1).
+            - For revenue_growth: If not directly stated, calculate as ((current revenue - previous revenue) / previous revenue) * 100 if revenues are available in the document; set to 0.0 for the earliest year or if unavailable.
+            - For other fields: Extract directly if stated; set to 0.0 if not available (do not calculate unless specified).
+            - Ensure the output strictly adheres to the JSON schema; do not add extra fields, explanations, or narrative text.
+            - If no KPI data is found for a year, do not include that year in the list.
+
+            Field Descriptions (use these to guide extraction):
+            - year: The fiscal or calendar year as a string (e.g., '2023'). Look for headers like 'Year Ended December 31, 2023' or 'FY2022'.
+            - gross_margin: Gross margin percentage as directly stated, in percent (e.g., 25.5).
+            - operating_margin: Operating margin percentage as directly stated, in percent (e.g., 15.2).
+            - debt_to_equity: Debt to equity ratio as directly stated, as a decimal (e.g., 1.5).
+            - current_ratio: Current ratio as directly stated, as a decimal (e.g., 2.0).
+            - revenue_growth: Revenue growth percentage as directly stated or calculated if possible, in percent (set to 0.0 for earliest year).
+            - market_share: Market share percentage if explicitly stated, in percent (e.g., 12.3).
+        """
+    ))
+
+        return KPIsAgent
+
+    def extract_valuation(self, financial_doc: str) -> RunResponse:
         """
         Extracts valuation from the provided text in the specified JSON format.
         
@@ -364,49 +328,38 @@ class PDFCompanyExtractor:
         :return: Dictionary containing the extracted valuation.
         """
         # Prepare the JSON schema for structured output
-        schema = Valuation.model_json_schema()
-        strict_schema = self.make_schema_strict(schema)
-        
-        # Prompt for extraction
-        system_prompt = (
-            "You are ValuationExtractor, an AI agent specialized in parsing and extracting valuation metrics from lengthy financial documents such as annual reports, 10-K filings, or earnings statements, which may span 80-90 pages or more.\n\n"
-            "Agent Aim: Your primary goal is to accurately identify and extract valuation data from the provided text, handling variations in terminology, table formats, and document structures. Focus on valuation sections, financial highlights, or MD&A, extracting only values that are directly stated in the document. Do not perform any calculations or derivations; assume all required values are explicitly available in the 10-K or financial documents. If a value is not directly stated, use 0 or 0.0 as specified. Fill all fields without leaving any blank.\n\n"
-            "Instructions:\n"
-            "- Scan the entire text thoroughly, including tables, footnotes, narrative sections, and management's discussion to locate explicitly stated valuation data.\n"
-            "- Handle synonyms and variations: Fields may use different names across documents (e.g., 'Enterprise value' could be 'EV' or 'Total firm value').\n"
-            "- Do not calculate any values; extract only what is directly provided in the text.\n"
-            "- If a value is not explicitly stated, use 0 or 0.0 as a default.\n"
-            "- Ensure the output strictly adheres to the JSON schema; do not add extra fields or explanations.\n\n"
-            "Field Descriptions (use these to guide extraction):\n"
-            "- enterprise_value: Enterprise value in millions, directly stated.\n"
-            "- ev_ebitda_multiple: EV to EBITDA multiple as a decimal, directly stated.\n"
-            "- valuation_range.low: Low end of valuation range in millions, directly stated.\n"
-            "- valuation_range.high: High end of valuation range in millions, directly stated."
-        )
-        user_prompt = f"Extract the valuation from the following text (which may be extensive):\n\n{text}"
-        
-        response = self.client.chat.completions.create(
-            model=self.deployment,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            response_format={
-                "type": "json_schema",
-                "json_schema": {
-                    "name": "valuation",
-                    "strict": True,
-                    "schema": strict_schema
-                }
-            },
-            temperature=0.0
-        )
-        
-        # Parse the JSON response
-        extracted_json = json.loads(response.choices[0].message.content)
-        return extracted_json
+        ValuationAgent = Agent(
+        name="ValuationMetricsExtractor",
+        model=self.client,
+        goal="Precisely parse, extract, and estimate structured valuation metrics from provided financial documents, including enterprise value, EV/EBITDA multiple, and valuation range, while accounting for inconsistencies in formatting, terminology, and reporting standards. Prioritize accuracy, completeness, and direct sourcing from the text, using calculations where necessary to enable reliable financial analysis, setting any unavailable values to 0 or 0.0 for consistency.",
+        description="An AI agent designed to extract and estimate valuation metrics such as enterprise value, EV/EBITDA multiple, and valuation range from financial documents like annual reports, 10-K filings, or valuation analyses. It parses lengthy texts to identify and structure valuation data, using direct extraction where possible and calculations or reasonable estimations if direct values are not available.",
+        response_model=Valuation,
+        context={"financial_doc":financial_doc},
+        add_context=True,
+        use_json_mode=True,
+        instructions=dedent("""
+        You are ValuationMetricsExtractor, an AI agent specialized in parsing, extracting, and estimating valuation metrics from lengthy financial documents such as annual reports, 10-K filings, or valuation reports, which may span 80-90 pages or more.
 
-    def extract_industry_benchmarks(self, text: str) -> dict:
+            Agent Aim: Your primary goal is to accurately identify and extract or calculate valuation metrics from the provided text, handling variations in terminology, table formats, and document structures. Focus on sections like financial summaries, valuation analysis, or management's discussion and analysis (MD&A), cross-referencing with balance sheets, income statements, or notes for completeness. Extract values directly as stated; perform calculations if the field description allows or if necessary for completeness. If data for a field is incomplete or not found, set the value to 0 or 0.0 (do not leave blank or use null).
+
+            Instructions:
+            - Scan the entire text thoroughly, including tables, footnotes, and narrative sections, to locate relevant valuation data.
+            - Handle synonyms and variations: Fields may use different names across documents (e.g., 'Enterprise value' could be 'EV' or 'Total firm value').
+            - Extract values in millions, rounding to the nearest integer if necessary. Assume the primary currency is USD unless otherwise specified.
+            - For enterprise_value: If directly stated, use that; otherwise, calculate as (estimated market cap + total debt - cash) using latest available data from the document. If market cap is not stated, use a reasonable estimate based on document context or set to 0 if unclear.
+            - For ev_ebitda_multiple: If directly stated, use that; otherwise, calculate as enterprise_value / latest EBITDA if both are available (or calculated); set to 0.0 if unavailable.
+            - For valuation_range: Extract low and high directly if stated; set to 0 if unavailable.
+            - Ensure the output strictly adheres to the JSON schema; do not add extra fields, explanations, or narrative text.
+
+            Field Descriptions (use these to guide extraction):
+            - enterprise_value: Enterprise value (EV) in millions, directly stated or calculated as described.
+            - ev_ebitda_multiple: EV/EBITDA multiple as a decimal (e.g., 12.5), directly stated or calculated.
+            - valuation_range: Nested object with low and high valuation estimates in millions, directly stated.
+        """
+    ))
+        return ValuationAgent
+
+    def extract_industry_benchmarks(self, financial_doc: str) -> RunResponse:
         """
         Extracts industry benchmarks from the provided text in the specified JSON format.
         
@@ -414,49 +367,36 @@ class PDFCompanyExtractor:
         :return: Dictionary containing the extracted industry benchmarks.
         """
         # Prepare the JSON schema for structured output
-        schema = IndustryBenchmarks.model_json_schema()
-        strict_schema = self.make_schema_strict(schema)
-        
-        # Prompt for extraction
-        system_prompt = (
-            "You are IndustryBenchmarksExtractor, an AI agent specialized in parsing and extracting industry benchmark metrics from lengthy financial documents such as annual reports, 10-K filings, or earnings statements, which may span 80-90 pages or more.\n\n"
-            "Agent Aim: Your primary goal is to accurately identify and extract automotive industry benchmarks from the provided text, handling variations in terminology, table formats, and document structures. Focus on industry comparison sections, MD&A, or key metrics tables, extracting only values that are directly stated in the document. Do not perform any calculations or derivations; assume all required values are explicitly available in the 10-K or financial documents. If a value is not directly stated, use 0.0 as specified. Fill all fields without leaving any blank.\n\n"
-            "Instructions:\n"
-            "- Scan the entire text thoroughly, including tables, footnotes, narrative sections, and management's discussion to locate explicitly stated industry benchmarks.\n"
-            "- Handle synonyms and variations: Fields may use different names across documents (e.g., 'Average gross margin' could be 'Industry gross profit margin avg').\n"
-            "- Do not calculate any values; extract only what is directly provided in the text.\n"
-            "- If a value is not explicitly stated, use 0.0 as a default.\n"
-            "- Ensure the output strictly adheres to the JSON schema; do not add extra fields or explanations.\n\n"
-            "Field Descriptions (use these to guide extraction):\n"
-            "- avg_gross_margin: Average gross margin % for automotive industry, directly stated.\n"
-            "- avg_operating_margin: Average operating margin % for automotive industry, directly stated.\n"
-            "- avg_debt_to_equity: Average debt to equity ratio for automotive industry, directly stated.\n"
-            "- avg_revenue_growth: Average revenue growth % for automotive industry, directly stated."
-        )
-        user_prompt = f"Extract the industry benchmarks from the following text (which may be extensive):\n\n{text}"
-        
-        response = self.client.chat.completions.create(
-            model=self.deployment,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            response_format={
-                "type": "json_schema",
-                "json_schema": {
-                    "name": "industry_benchmarks",
-                    "strict": True,
-                    "schema": strict_schema
-                }
-            },
-            temperature=0.0
-        )
-        
-        # Parse the JSON response
-        extracted_json = json.loads(response.choices[0].message.content)
-        return extracted_json
+        IndustryBenchmarksAgent = Agent(
+        name="IndustryBenchmarksExtractor",
+        model=self.client,
+        goal="Precisely parse and extract structured industry benchmark averages for key financial metrics in the automotive sector from provided financial documents, while accounting for inconsistencies in formatting, terminology, and reporting standards. Prioritize accuracy, completeness, and direct sourcing from the text to enable reliable comparative analysis, setting any unavailable values to 0.0 for consistency.",
+        description="An AI agent designed to extract automotive industry benchmark averages for metrics like gross margin, operating margin, debt to equity, and revenue growth from financial documents such as annual reports, 10-K filings, or industry analyses. It parses lengthy texts to identify and structure benchmark data, using direct extraction from the document.",
+        response_model=IndustryBenchmarks,
+        use_json_mode=True,
+        context={"financial_doc":financial_doc},
+        add_context=True,
+        instructions=dedent("""
+        You are IndustryBenchmarksExtractor, an AI agent specialized in parsing and extracting industry benchmark averages for the automotive sector from lengthy financial documents such as annual reports, 10-K filings, or industry reports, which may span 80-90 pages or more.
+
+            Agent Aim: Your primary goal is to accurately identify and extract automotive industry benchmark metrics from the provided text, handling variations in terminology, table formats, and document structures. Focus on sections like industry comparisons, peer analysis, or management's discussion and analysis (MD&A), cross-referencing with financial summaries or notes for completeness. Extract values directly as stated; if data for a field is incomplete or not found, set the value to 0.0 (do not leave blank or use null). Do not use external knowledge or assumptions; rely solely on the document.
+
+            Instructions:
+            - Scan the entire text thoroughly, including tables, footnotes, and narrative sections, to locate relevant industry benchmark data specific to the automotive sector.
+            - Handle synonyms and variations: Fields may use different names across documents (e.g., 'Avg gross margin' could be 'Industry gross profit average' or 'Sector GM%').
+            - For percentages and ratios, report as floats (e.g., 25.5 for 25.5%, 1.5 for 1.5:1).
+            - Ensure the output strictly adheres to the JSON schema; do not add extra fields, explanations, or narrative text.
+
+            Field Descriptions (use these to guide extraction):
+            - avg_gross_margin: Average gross margin percentage for automotive industry as directly stated, in percent (e.g., 25.5).
+            - avg_operating_margin: Average operating margin percentage for automotive industry as directly stated, in percent (e.g., 15.2).
+            - avg_debt_to_equity: Average debt to equity ratio for automotive industry as directly stated, as a decimal (e.g., 1.5).
+            - avg_revenue_growth: Average revenue growth percentage for automotive industry as directly stated, in percent (e.g., 5.0).
+        """
+    ))
+        return IndustryBenchmarksAgent
     
-    def extract_risk_factors(self, text: str) -> dict:
+    def extract_risk_factors(self, financial_doc: str) -> RunResponse:
         """
         Extracts risk factors from the provided text in the specified JSON format.
         
@@ -464,50 +404,38 @@ class PDFCompanyExtractor:
         :return: Dictionary containing the extracted risk factors.
         """
         # Prepare the JSON schema for structured output
-        schema = RiskFactors.model_json_schema()
-        strict_schema = self.make_schema_strict(schema)
-        
-        # Prompt for extraction
-        system_prompt = (
-            "You are RiskFactorsExtractor, an AI agent specialized in parsing and extracting risk factors from lengthy financial documents such as annual reports, 10-K filings, or earnings statements, which may span 80-90 pages or more.\n\n"
-            "Agent Aim: Your primary goal is to accurately identify and extract risk factors from the provided text, handling variations in terminology, table formats, and document structures. Focus on the 'Risk Factors' section, MD&A, or related disclosures, extracting based on direct mentions or descriptions in the document. Do not perform any calculations or external inferences; base assessments solely on the text provided. If a risk is not directly mentioned or described, set booleans to False and levels to 'medium' as default. Fill all fields without leaving any blank.\n\n"
-            "Instructions:\n"
-            "- Scan the entire text thoroughly, including risk factors sections, footnotes, narrative descriptions, and management's discussion to locate explicitly mentioned or described risks.\n"
-            "- Handle synonyms and variations: Risks may be phrased differently across documents (e.g., 'customer concentration' could be 'reliance on key customers').\n"
-            "- Set boolean fields to True only if the risk is directly discussed as significant; otherwise False.\n"
-            "- For string levels (debt_level, market_cyclicality), use the described intensity ('low', 'medium', 'high') or default to 'medium' if unclear.\n"
-            "- Ensure the output strictly adheres to the JSON schema; do not add extra fields or explanations.\n\n"
-            "Field Descriptions (use these to guide extraction):\n"
-            "- high_customer_concentration: True if high customer concentration risk is directly mentioned or described.\n"
-            "- geographic_concentration: True if geographic concentration risk is directly mentioned or described.\n"
-            "- supply_chain_dependency: True if supply chain dependency risk is directly mentioned or described.\n"
-            "- debt_level: Debt level assessment as 'low', 'medium', or 'high', directly from text or default 'medium'.\n"
-            "- market_cyclicality: Market cyclicality assessment as 'low', 'medium', or 'high', directly from text or default 'medium'."
-        )
-        user_prompt = f"Extract the risk factors from the following text (which may be extensive):\n\n{text}"
-        
-        response = self.client.chat.completions.create(
-            model=self.deployment,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            response_format={
-                "type": "json_schema",
-                "json_schema": {
-                    "name": "risk_factors",
-                    "strict": True,
-                    "schema": strict_schema
-                }
-            },
-            temperature=0.0
-        )
-        
-        # Parse the JSON response
-        extracted_json = json.loads(response.choices[0].message.content)
-        return extracted_json
+        RiskFactorsAgent = Agent(
+        name="RiskFactorsExtractor",
+        model=self.client,
+        goal="Precisely parse and extract structured risk factors from provided financial documents, covering aspects like concentrations, dependencies, debt levels, and market cyclicality, while accounting for inconsistencies in formatting, terminology, and reporting standards. Prioritize accuracy, completeness, and direct sourcing from the text to enable reliable risk assessment, using default values where specified for consistency.",
+        description="An AI agent designed to extract and assess risk factors such as customer concentration, geographic concentration, supply chain dependency, debt level, and market cyclicality from financial documents like annual reports, 10-K filings, or risk disclosures. It parses lengthy texts to identify and structure risk data based on direct mentions and descriptions.",
+        response_model=RiskFactors,
+        use_json_mode=True,
+        context={"financial_doc":financial_doc},
+        add_context=True,
+        instructions=dedent("""
+        You are RiskFactorsExtractor, an AI agent specialized in parsing and extracting risk factors from lengthy financial documents such as annual reports, 10-K filings, or risk factor sections, which may span 80-90 pages or more.
 
-    def extract_cash_flow(self, text: str) -> dict:
+            Agent Aim: Your primary goal is to accurately identify and extract or assess risk factors from the provided text, handling variations in terminology, table formats, and document structures. Focus on sections like risk factors, management's discussion and analysis (MD&A), or notes to financial statements, cross-referencing for completeness. Extract or infer based directly on the document content as described in the fields; use defaults like False or 'medium' if not mentioned or unclear.
+
+            Instructions:
+            - Scan the entire text thoroughly, including tables, footnotes, and narrative sections, to locate relevant risk factor data.
+            - Handle synonyms and variations: Risks may be described differently across documents (e.g., 'customer concentration' could be 'reliance on key clients' or 'major customer dependency').
+            - For boolean fields: Set to True only if the document directly mentions or describes it as a significant risk; False otherwise (including if described as low or no risk).
+            - For string fields: Assess as 'low', 'medium', or 'high' based on direct statements or descriptions; use 'medium' if unclear, not specified, or neutral.
+            - Ensure the output strictly adheres to the JSON schema; do not add extra fields, explanations, or narrative text.
+
+            Field Descriptions (use these to guide extraction):
+            - high_customer_concentration: True if high customer concentration risk is directly mentioned or described; False otherwise.
+            - geographic_concentration: True if geographic concentration risk is directly mentioned or described; False otherwise.
+            - supply_chain_dependency: True if supply chain dependency risk is directly mentioned or described; False otherwise.
+            - debt_level: Assessed debt level as 'low', 'medium', or 'high' based on document descriptions or ratios discussed; 'medium' if unclear.
+            - market_cyclicality: Assessed market cyclicality as 'low', 'medium', or 'high' based on document descriptions (e.g., cyclical nature of automotive industry); 'medium' if unclear.
+        """
+    ))
+        return RiskFactorsAgent
+
+    def extract_cash_flow(self, financial_doc: str) -> RunResponse:
         """
         Extracts cash flow data from the provided text in the specified JSON format.
         
@@ -515,54 +443,44 @@ class PDFCompanyExtractor:
         :return: Dictionary containing the extracted cash flow data.
         """
         # Prepare the JSON schema for structured output
-        schema = CashFlowData.model_json_schema()
-        strict_schema = self.make_schema_strict(schema)
-        
-        # Prompt for extraction
-        system_prompt = (
-            "You are CashFlowExtractor, an AI agent specialized in parsing and extracting cash flow statement data from lengthy financial documents such as annual reports, 10-K filings, or financial statements, which may span 80-90 pages or more.\n\n"
-            "Agent Aim: Your primary goal is to accurately identify and extract cash flow metrics for the last 3 years (or available years) from the provided text, handling variations in terminology, table formats, and document structures. Focus on consolidated statements of cash flows, cross-referencing sections like financial highlights, notes to financial statements, or management's discussion for completeness. If data is incomplete, use logical estimates based on context (e.g., sum sub-items for adjustments or changes) and fill all fields without leaving any blank.\n\n"
-            "Instructions:\n"
-            "- Scan the entire text thoroughly, including tables, footnotes, and narrative sections, to locate relevant cash flow data.\n"
-            "- Handle synonyms and variations: Fields may use different names across documents (e.g., 'Net cash from operations' could be 'Cash provided by operating activities').\n"
-            "- Prioritize the most recent fiscal years, typically the last 3, and order them from newest to oldest.\n"
-            "- Convert all monetary values to millions (e.g., if reported in thousands, divide by 1,000; if in billions, multiply by 1,000). Use floats to preserve decimals if present, rounding appropriately.\n"
-            "- If exact values are missing, derive them where possible (e.g., Adjustments = sum of depreciation + amortization + other non-cash items; Net cash flow = operating + investing + financing) or use 0.0 as a last resort.\n"
-            "- Ensure the output strictly adheres to the JSON schema; do not add extra fields or explanations.\n\n"
-            "Field Descriptions (use these to guide extraction):\n"
-            "- year: The fiscal or calendar year as a string (e.g., '2023'). Look for headers like 'Year Ended December 31, 2023' or 'FY2022'.\n"
-            "- net_income: Starting net income in millions.\n"
-            "- adjustments_for_non_cash_items: Sum of non-cash adjustments in millions.\n"
-            "- changes_in_working_capital: Net changes in working capital in millions.\n"
-            "- cash_from_operating_activities: Operating cash flow subtotal in millions.\n"
-            "- cash_from_investing_activities: Investing cash flow subtotal in millions.\n"
-            "- cash_from_financing_activities: Financing cash flow subtotal in millions.\n"
-            "- net_cash_flow: Net change in cash in millions.\n"
-            "- beginning_cash_balance: Cash at period start in millions.\n"
-            "- ending_cash_balance: Cash at period end in millions."
-        )
-        user_prompt = f"Extract the cash flow data from the following text (which may be extensive):\n\n{text}"
-        
-        response = self.client.chat.completions.create(
-            model=self.deployment,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            response_format={
-                "type": "json_schema",
-                "json_schema": {
-                    "name": "cash_flow",
-                    "strict": True,
-                    "schema": strict_schema
-                }
-            },
-            temperature=0.0
-        )
-        
-        # Parse the JSON response
-        extracted_json = json.loads(response.choices[0].message.content)
-        return extracted_json
+        CashFlowAgent = Agent(
+        name="CashFlowExtractor",
+        model=self.client,
+        goal="Precisely parse and extract structured cash flow statement data from provided financial documents, covering the most recent available years while accounting for inconsistencies in formatting, terminology, and reporting standards. Prioritize accuracy, completeness, and direct sourcing from the text to enable reliable financial analysis, setting any unavailable values to 0.0 for consistency.",
+        description="An AI agent designed to extract key cash flow data from financial documents such as annual reports, 10-K filings, or cash flow statements. It parses lengthy texts to identify and structure data like net income, operating cash flow, investing cash flow, financing cash flow, and cash balances for the most recent years available.",
+        response_model=CashFlowData,
+        use_json_mode=True,
+        context={"financial_doc": financial_doc},
+        add_context=True,
+        instructions=dedent("""
+            You are CashFlowExtractor, an AI agent specialized in parsing and extracting key cash flow data from lengthy financial documents such as annual reports, 10-K filings, or statements of cash flows, which may span 80-90 pages or more.
+
+            Agent Aim: Your primary goal is to accurately identify and extract cash flow metrics for the last 3 years (or available years if fewer) from the provided text, handling variations in terminology, table formats, and document structures. Focus on consolidated statements of cash flows or equivalent sections, cross-referencing with financial highlights, notes, or management's discussion for completeness. Clean noisy text to extract accurate numbers, ensuring all data is sourced directly from the document. If data for a field is incomplete or not found, set the value to 0.0 (do not leave blank or use null).
+
+            Instructions:
+            - Scan the entire text thoroughly, including tables, footnotes, and narrative sections, to locate relevant cash flow data.
+            - Handle synonyms and variations: Fields may use different names across documents (e.g., 'Cash from operating activities' could be 'Operating cash flows' or 'Net cash from operations').
+            - Prioritize the most recent fiscal years, typically the last 3 (e.g., 2023, 2022, 2021), and order them from newest to oldest in the output list.
+            - Extract values in millions, using floats for precision and rounding if necessary. Assume the primary currency is USD unless otherwise specified. Values can be positive or negative.
+            - For aggregated fields like adjustments_for_non_cash_items or changes_in_working_capital: Sum relevant sub-items if broken down and directly available.
+            - For net_cash_flow: If not directly stated, calculate as the sum of cash_from_operating_activities + cash_from_investing_activities + cash_from_financing_activities if those are available; set to 0.0 if unclear.
+            - For ending_cash_balance: If not directly stated, calculate as beginning_cash_balance + net_cash_flow if available; set to 0.0 if unclear.
+            - Ensure the output strictly adheres to the JSON schema; do not add extra fields, explanations, or narrative text.
+            - If no cash flow data is found for a year, do not include that year in the list.
+
+            Field Descriptions (use these to guide extraction):
+            - year: The fiscal or calendar year as a string (e.g., '2023'). Look for headers like 'Year Ended December 31, 2023' or 'FY2022'.
+            - net_income: Net income in millions from cash flow statement.
+            - adjustments_for_non_cash_items: Sum of non-cash adjustments in millions.
+            - changes_in_working_capital: Net changes in working capital in millions (positive or negative).
+            - cash_from_operating_activities: Net operating cash flow in millions.
+            - cash_from_investing_activities: Net investing cash flow in millions.
+            - cash_from_financing_activities: Net financing cash flow in millions.
+            - net_cash_flow: Net change in cash in millions, calculated if necessary.
+            - beginning_cash_balance: Starting cash balance in millions.
+            - ending_cash_balance: Ending cash balance in millions, calculated if necessary.
+                            """))
+        return CashFlowAgent
 
 def main():
     # Streamlit app
@@ -590,30 +508,48 @@ def main():
             with st.spinner("Extracting company information section by section..."):
                 
                 status = st.status("Processing...", expanded=True)
+                prompt = """You are an AI specialized in extracting data from financial docs like 10-Ks. Order newest to oldest. Output JSON only."""
 
                 status.write("Extracting Company Info...")
-                final_report['company_info'] = extractor.extract_company_info(pdf_text)
-                
+                a1 = extractor.extract_company_info(pdf_text)
+                a1.run(prompt=prompt)
+                final_report['company_info'] = CompanyInfo.model_dump_json(a1.content,include=2)
+
+
                 status.write("Extracting Financial Metrics...")
-                final_report['financial_metrics'] = extractor.extract_financial_metrics(pdf_text)
-                
+                a2 = extractor.extract_financial_metrics(pdf_text)
+                a2.run(prompt=prompt)
+                final_report['financial_metrics'] = FinancialMetrics.model_dump_json(a2.content,include=2)
+
                 status.write("Extracting Balance Sheet...")
-                final_report['balance_sheet'] = extractor.extract_balance_sheet(pdf_text)
+                a3 = extractor.extract_balance_sheet(pdf_text)
+                a3.run(prompt=prompt)
+                final_report['balance_sheet'] = BalanceSheet.model_dump_json(a3.content,include=2)
 
                 status.write("Extracting KPIs...")
-                final_report['kpis'] = extractor.extract_kpis(pdf_text)
+                a4 = extractor.extract_kpis(pdf_text)
+                a4.run(prompt=prompt)
+                final_report['kpis'] = KPIs.model_dump_json(a4.content,include=2)   
 
                 status.write("Extracting Valuation...")
-                final_report['valuation'] = extractor.extract_valuation(pdf_text)
+                a5 = extractor.extract_valuation(pdf_text)
+                a5.run(prompt=prompt)
+                final_report['valuation'] = Valuation.model_dump_json(a5.content,include=2)
 
                 status.write("Extracting Industry Benchmarks...")
-                final_report['industry_benchmarks'] = extractor.extract_industry_benchmarks(pdf_text)
+                a6 = extractor.extract_industry_benchmarks(pdf_text)
+                a6.run(prompt=prompt)
+                final_report['industry_benchmarks'] = IndustryBenchmarks.model_dump_json(a6.content,include=2)
 
                 status.write("Extracting Risk Factors...")
-                final_report['risk_factors'] = extractor.extract_risk_factors(pdf_text)
-                
+                a7 = extractor.extract_risk_factors(pdf_text)
+                a7.run(prompt=prompt)
+                final_report['risk_factors'] = RiskFactors.model_dump_json(a7.content,include=2)
+
                 status.write("Extracting Cash Flow Data...")
-                final_report['cash_flow'] = extractor.extract_cash_flow(pdf_text)
+                a8 = extractor.extract_cash_flow(pdf_text)
+                a8.run(prompt=prompt)
+                final_report['cash_flow'] = CashFlowData.model_dump_json(a8.content,include=2)
 
                 status.update(label="Extraction complete!", state="complete", expanded=False)
 
