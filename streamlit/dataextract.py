@@ -132,6 +132,8 @@ class PDFCompanyExtractor:
         )
         self.deployment = deployment
 
+        self.prompt = """You are an AI specialized in extracting data from financial docs like 10-Ks. Order newest to oldest. Output JSON only."""
+
     def extract_text_from_pdf(self, pdf_path: str) -> str:
         """
         Reads a PDF file and extracts all text from it.
@@ -191,7 +193,12 @@ class PDFCompanyExtractor:
         Ensure information is sourced from the document where possible; use reasonable defaults if missing.
         """
     ))
-        return CompanyInfoAgent
+        r1 = ""
+
+        a1 = CompanyInfoAgent.run(self.prompt)
+        r1 = CompanyInfo.model_dump_json(a1.content, indent=2)
+
+        return r1
 
     def extract_financial_metrics(self, financial_doc: str) -> RunResponse:
         """
@@ -230,8 +237,14 @@ class PDFCompanyExtractor:
                 "- ebitda: EBITDA, DO not use calculable equivalent in millions."
                 """
     ))
+        
+        r2 = ""
 
-        return FinancialMetricsAgent
+        a2 = FinancialMetricsAgent.run(self.prompt)
+
+        r2 = FinancialMetrics.model_dump_json(a2.content, indent=2)
+
+        return r2
 
     def extract_balance_sheet(self, financial_doc: str) -> RunResponse:
         """
@@ -273,7 +286,14 @@ class PDFCompanyExtractor:
             - cash: Cash and cash equivalents in millions, potentially including short-term investments if combined.
         """
     )  )
-        return BalanceSheetAgent
+        
+        r3 = ""
+
+        a3 = BalanceSheetAgent.run(self.prompt)
+        r3 = BalanceSheet.model_dump_json(a3.content, indent=2)
+
+        # Make the schema strict
+        return r3
 
     def extract_kpis(self, financial_doc: str) -> RunResponse:
         """
@@ -318,7 +338,11 @@ class PDFCompanyExtractor:
         """
     ))
 
-        return KPIsAgent
+        r4 = ""
+        a4 = KPIsAgent.run(self.prompt)
+        r4 = KPIs.model_dump_json(a4.content, indent=2)
+
+        return r4
 
     def extract_valuation(self, financial_doc: str) -> RunResponse:
         """
@@ -357,7 +381,10 @@ class PDFCompanyExtractor:
             - valuation_range: Nested object with low and high valuation estimates in millions, directly stated.
         """
     ))
-        return ValuationAgent
+        r5 = ""
+        a5 = ValuationAgent.run(self.prompt)
+        r5 = Valuation.model_dump_json(a5.content, indent=2)
+        return r5
 
     def extract_industry_benchmarks(self, financial_doc: str) -> RunResponse:
         """
@@ -394,8 +421,11 @@ class PDFCompanyExtractor:
             - avg_revenue_growth: Average revenue growth percentage for automotive industry as directly stated, in percent (e.g., 5.0).
         """
     ))
-        return IndustryBenchmarksAgent
-    
+        r6 = ""
+        a6 = IndustryBenchmarksAgent.run(self.prompt)
+        r6 = IndustryBenchmarks.model_dump_json(a6.content, indent=2)
+        return r6
+
     def extract_risk_factors(self, financial_doc: str) -> RunResponse:
         """
         Extracts risk factors from the provided text in the specified JSON format.
@@ -433,7 +463,11 @@ class PDFCompanyExtractor:
             - market_cyclicality: Assessed market cyclicality as 'low', 'medium', or 'high' based on document descriptions (e.g., cyclical nature of automotive industry); 'medium' if unclear.
         """
     ))
-        return RiskFactorsAgent
+        r7 = ""
+        a7 = RiskFactorsAgent.run(self.prompt)
+        r7 = RiskFactors.model_dump_json(a7.content, indent=2)
+
+        return r7
 
     def extract_cash_flow(self, financial_doc: str) -> RunResponse:
         """
@@ -480,7 +514,10 @@ class PDFCompanyExtractor:
             - beginning_cash_balance: Starting cash balance in millions.
             - ending_cash_balance: Ending cash balance in millions, calculated if necessary.
                             """))
-        return CashFlowAgent
+        r8 = ""
+        a8 = CashFlowAgent.run(self.prompt)
+        r8 = CashFlowData.model_dump_json(a8.content, indent=2)
+        return r8
 
 def main():
     # Streamlit app
@@ -508,48 +545,39 @@ def main():
             with st.spinner("Extracting company information section by section..."):
                 
                 status = st.status("Processing...", expanded=True)
-                prompt = """You are an AI specialized in extracting data from financial docs like 10-Ks. Order newest to oldest. Output JSON only."""
+                # prompt = """You are an AI specialized in extracting data from financial docs like 10-Ks. Order newest to oldest. Output JSON only."""
 
                 status.write("Extracting Company Info...")
-                a1 = extractor.extract_company_info(pdf_text)
-                a1.run(prompt=prompt)
-                final_report['company_info'] = CompanyInfo.model_dump_json(a1.content,include=2)
+                final_report['company_info'] = extractor.extract_company_info(pdf_text)
+               
 
 
                 status.write("Extracting Financial Metrics...")
-                a2 = extractor.extract_financial_metrics(pdf_text)
-                a2.run(prompt=prompt)
-                final_report['financial_metrics'] = FinancialMetrics.model_dump_json(a2.content,include=2)
+                final_report['financial_metrics'] = extractor.extract_financial_metrics(pdf_text)
+               
 
                 status.write("Extracting Balance Sheet...")
-                a3 = extractor.extract_balance_sheet(pdf_text)
-                a3.run(prompt=prompt)
-                final_report['balance_sheet'] = BalanceSheet.model_dump_json(a3.content,include=2)
+                final_report['balance_sheet'] = extractor.extract_balance_sheet(pdf_text)
+                
 
                 status.write("Extracting KPIs...")
-                a4 = extractor.extract_kpis(pdf_text)
-                a4.run(prompt=prompt)
-                final_report['kpis'] = KPIs.model_dump_json(a4.content,include=2)   
+                final_report['kpis'] = extractor.extract_kpis(pdf_text)
+                 
 
                 status.write("Extracting Valuation...")
-                a5 = extractor.extract_valuation(pdf_text)
-                a5.run(prompt=prompt)
-                final_report['valuation'] = Valuation.model_dump_json(a5.content,include=2)
-
+                final_report['valuation'] = extractor.extract_valuation(pdf_text)
+                
                 status.write("Extracting Industry Benchmarks...")
-                a6 = extractor.extract_industry_benchmarks(pdf_text)
-                a6.run(prompt=prompt)
-                final_report['industry_benchmarks'] = IndustryBenchmarks.model_dump_json(a6.content,include=2)
+                final_report['industry_benchmarks'] = extractor.extract_industry_benchmarks(pdf_text)
+                
 
                 status.write("Extracting Risk Factors...")
-                a7 = extractor.extract_risk_factors(pdf_text)
-                a7.run(prompt=prompt)
-                final_report['risk_factors'] = RiskFactors.model_dump_json(a7.content,include=2)
+                final_report['risk_factors'] = extractor.extract_risk_factors(pdf_text)
+                
 
                 status.write("Extracting Cash Flow Data...")
-                a8 = extractor.extract_cash_flow(pdf_text)
-                a8.run(prompt=prompt)
-                final_report['cash_flow'] = CashFlowData.model_dump_json(a8.content,include=2)
+                final_report['cash_flow'] = extractor.extract_cash_flow(pdf_text)
+                
 
                 status.update(label="Extraction complete!", state="complete", expanded=False)
 
